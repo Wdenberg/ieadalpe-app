@@ -1,4 +1,5 @@
 import { ScrollView, Text, View, ActivityIndicator } from 'react-native';
+import { useRouter } from 'expo-router';
 import { ScreenContainer } from '@/components/screen-container';
 import { NoticiaCard } from '@/components/noticia-card';
 import { useColors } from '@/hooks/use-colors';
@@ -14,6 +15,7 @@ interface Noticia {
 }
 
 export default function NoticiasScreen() {
+  const router = useRouter();
   const colors = useColors();
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,6 +71,7 @@ export default function NoticiasScreen() {
                   resumo={noticia.resumo}
                   imagemUrl={noticia.imagem_url}
                   data={noticia.publicado_em}
+                  onPress={() => router.push(`/(tabs)/noticias/${noticia.id}`)}
                 />
               ))}
             </View>

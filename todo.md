@@ -94,3 +94,10 @@
 - [ ] Gerar APK/IPA para testes
 - [ ] Documentar instruções de uso
 - [ ] Entregar projeto ao usuário
+
+
+## Fase 11: Novas Features Solicitadas
+- [x] Criar tela NoticiaDetalhe com conteúdo completo
+- [x] Implementar navegação para detalhe de notícia
+- [x] Exibir imagem em tamanho maior
+- [x] Mostrar conteúdo completo da notícia

@@ -190,7 +190,7 @@ export default function DashboardScreen() {
                     resumo={noticia.resumo}
                     imagemUrl={noticia.imagem_url}
                     data={noticia.publicado_em}
-                    onPress={() => router.push('/(tabs)/noticias')}
+                    onPress={() => router.push(`/(tabs)/noticias/${noticia.id}`)}
                   />
                 ))}
               </View>
