@@ -10,7 +10,7 @@ interface Noticia {
   titulo: string;
   resumo?: string;
   imagem_url?: string;
-  publicado_em: string;
+  created_at: string;
 }
 
 export default function NoticiasScreen() {
@@ -23,9 +23,10 @@ export default function NoticiasScreen() {
       try {
         const { data: noticiasData } = await supabase
           .from('noticias')
-          .select('id, titulo, resumo, imagem_url, publicado_em')
-          .order('publicado_em', { ascending: false });
+          .select('id, titulo, resumo, imagem_url, created_at')
+          .order('created_at', { ascending: false });
 
+        
         if (noticiasData) {
           setNoticias(noticiasData);
         }
@@ -68,7 +69,7 @@ export default function NoticiasScreen() {
                   titulo={noticia.titulo}
                   resumo={noticia.resumo}
                   imagemUrl={noticia.imagem_url}
-                  data={noticia.publicado_em}
+                  data={noticia.created_at}
                 />
               ))}
             </View>

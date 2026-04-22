@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { ScrollView, Text, View, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
+import { ScrollView, Text, View, TouchableOpacity, TextInput, ActivityIndicator, Image} from 'react-native';
 import { useRouter } from 'expo-router';
 import { ScreenContainer } from '@/components/screen-container';
 import { supabase } from '@/lib/supabase';
 import { useColors } from '@/hooks/use-colors';
 import { cn } from '@/lib/utils';
+import logoIeadalpe from '@/assets/images/LogoIeadalpe.png';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -45,13 +46,14 @@ export default function LoginScreen() {
         <View className="flex-1 justify-center px-6 gap-8">
           {/* Logo Section */}
           <View className="items-center gap-4">
-            <View className="w-24 h-24 bg-primary rounded-full items-center justify-center">
-              <Text className="text-4xl font-bold text-surface">✝</Text>
+            <View className=" items-center justify-center overflow-hidden" style={{ width: 110, height: 110 }}>
+              <Image
+                source={logoIeadalpe}
+                style={{ width: 99, height: 99 }}
+                resizeMode="contain"
+              ></Image>
             </View>
-            <Text className="text-3xl font-bold text-foreground text-center">IEADALPE</Text>
-            <Text className="text-base text-muted text-center">
-              Igreja Evangélica Assembleia de Deus
-            </Text>
+            
           </View>
 
           {/* Form Section */}
