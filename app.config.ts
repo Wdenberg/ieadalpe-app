@@ -32,7 +32,7 @@ const env = {
   appSlug: "ieadalpe-app",
   // S3 URL of the app logo - set this to the URL returned by generate_image when creating custom logo
   // Leave empty to use the default icon from assets/images/icon.png
-  logoUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310519663227306074/fALMpjvoDzi7bBUVMi5RP4/icon-YLQ4vqXaAs49niKQEsntmk.webp",
+  //logoUrl: "./assets/images/android-icon-foreground.png",
   scheme: schemeFromBundleId,
   iosBundleId: bundleId,
   androidPackage: bundleId,
@@ -86,6 +86,7 @@ const config: ExpoConfig = {
   },
   plugins: [
     "expo-router",
+    "expo-font",
     [
       "expo-audio",
       {

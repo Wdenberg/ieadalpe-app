@@ -11,9 +11,9 @@ interface NoticiaDetalhada {
   resumo?: string;
   conteudo: string;
   imagem_url?: string;
-  autor?: string;
-  publicado_em: string;
-  atualizado_em?: string;
+  autor_nome?: string;
+  created_at: string;
+  update_at?: string;
   categoria?: string;
 }
 
@@ -110,7 +110,7 @@ export default function NoticiaDetalheScreen() {
           <Image
             source={{ uri: noticia.imagem_url }}
             className="w-full h-64"
-            resizeMode="cover"
+            resizeMode="contain"
           />
         )}
 
@@ -128,7 +128,7 @@ export default function NoticiaDetalheScreen() {
               </View>
             )}
             <Text className="text-sm text-muted font-medium">
-              {formatDate(noticia.publicado_em)}
+              {formatDate(noticia.created_at)}
             </Text>
           </View>
 
@@ -136,16 +136,6 @@ export default function NoticiaDetalheScreen() {
           <Text className="text-2xl font-bold text-foreground leading-tight">
             {noticia.titulo}
           </Text>
-
-          {/* Autor */}
-          {noticia.autor && (
-            <View className="bg-surface rounded-lg p-3 border border-border">
-              <Text className="text-xs text-muted font-medium mb-1">Por</Text>
-              <Text className="text-sm font-semibold text-foreground">
-                {noticia.autor}
-              </Text>
-            </View>
-          )}
 
           {/* Resumo */}
           {noticia.resumo && (
@@ -172,28 +162,33 @@ export default function NoticiaDetalheScreen() {
             <View className="flex-row justify-between">
               <Text className="text-xs text-muted font-medium">Publicado em</Text>
               <Text className="text-xs font-semibold text-foreground">
-                {formatDate(noticia.publicado_em)}
+                {formatDate(noticia.created_at)}
               </Text>
             </View>
 
-            {noticia.atualizado_em && (
+            {noticia.update_at && (
               <View className="flex-row justify-between">
                 <Text className="text-xs text-muted font-medium">Atualizado em</Text>
                 <Text className="text-xs font-semibold text-foreground">
-                  {formatDate(noticia.atualizado_em)}
+                  {formatDate(noticia.update_at)}
                 </Text>
               </View>
             )}
-
-            <View className="flex-row justify-between">
-              <Text className="text-xs text-muted font-medium">ID da Notícia</Text>
-              <Text className="text-xs font-mono text-foreground">{noticia.id}</Text>
+             {/* Autor */}
+          {noticia.autor_nome && (
+            <View className="bg-surface rounded-lg p-3 border border-border">
+              <Text className="text-xs text-muted font-medium mb-1">Por</Text>
+              <Text className="text-sm font-semibold text-foreground">
+                {noticia.autor_nome}
+              </Text>
             </View>
+          )}
+
           </View>
 
           {/* Botão Voltar */}
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={() => router.replace('/(tabs)/noticias')}
             className="bg-secondary rounded-lg p-4 items-center mt-4 mb-6"
           >
             <Text className="text-foreground font-bold">Voltar para Notícias</Text>

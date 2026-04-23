@@ -6,15 +6,19 @@ import { useColors } from '@/hooks/use-colors';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { formatarTelefone } from '@/lib/formatterPhone';
 
 interface ObreiroData {
   id: string;
   nome: string;
+  matricula:string;
   funcao: string;
+  setor:string;
+  congregacao:string;
   telefone?: string;
   data_nascimento?: string;
   foto_url?: string;
-  ativo: boolean;
+ 
 }
 
 interface Escala {
@@ -25,6 +29,7 @@ interface Escala {
   funcao_escala: string;
   confirmado: boolean;
 }
+type Funcao = "Pastor" | "Evangelista" | "Presbítero" | "Presbitero";
 
 export default function PerfilScreen() {
   const colors = useColors();
@@ -38,12 +43,12 @@ export default function PerfilScreen() {
   useEffect(() => {
     const fetchData = async () => {
       if (!user) return;
-
+      
       try {
         // Fetch obreiro data
         const { data: obreiroData } = await supabase
           .from('obreiros')
-          .select('id, nome, funcao, telefone, data_nascimento, foto_url, ativo')
+          .select('id, nome, matricula, funcao, setor, congregacao, telefone, data_nascimento, foto_url')
           .eq('user_id', user.id)
           .single();
 
@@ -74,6 +79,18 @@ export default function PerfilScreen() {
     fetchData();
   }, [user]);
 
+  function formateTitulo(funcao: Funcao){
+    if(funcao === "Pastor"){
+      return "Pr.";
+    }
+    if(funcao === "Evangelista"){
+      return "Ev.";
+    }
+    if(funcao === "Presbítero" || funcao === "Presbitero"){
+      return "Pb.";
+    }
+    return "";
+  }
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR', {
@@ -116,17 +133,12 @@ export default function PerfilScreen() {
             </View>
           )}
           <View className="items-center">
-            <Text className="text-2xl font-bold text-surface">{obreiro?.nome}</Text>
+            <Text className="text-2xl font-bold text-surface">{obreiro?.funcao ? formateTitulo(obreiro?.funcao as Funcao) : ""} {obreiro?.nome}</Text>
             <Text className="text-sm text-surface/70 mt-1">{obreiro?.funcao}</Text>
           </View>
 
-          {/* Status Badge */}
-          <View className="flex-row items-center gap-2 bg-surface/20 rounded-full px-3 py-1">
-            <View className={`w-2 h-2 rounded-full ${obreiro?.ativo ? 'bg-success' : 'bg-error'}`} />
-            <Text className="text-xs font-semibold text-surface">
-              {obreiro?.ativo ? 'Ativo' : 'Inativo'}
-            </Text>
-          </View>
+         
+          
         </View>
 
         {/* Content */}
@@ -135,15 +147,51 @@ export default function PerfilScreen() {
           <View className="gap-3">
             <Text className="text-lg font-bold text-foreground">Informações Pessoais</Text>
 
+               {obreiro?.matricula && (
+              <View className="bg-surface rounded-lg p-4 border border-border">
+                <Text className="text-xs text-muted font-medium mb-1">Matricula</Text>
+                <Text className="text-base text-foreground font-semibold">{obreiro.matricula}</Text>
+              </View>
+            )}
+            
+            {obreiro?.nome && (
+              <View className="bg-surface rounded-lg p-4 border border-border">
+                <Text className="text-xs text-muted font-medium mb-1">Nome</Text>
+                <Text className="text-base text-foreground font-semibold">{obreiro.nome}</Text>
+              </View>
+            )}
+          
             <View className="bg-surface rounded-lg p-4 border border-border">
               <Text className="text-xs text-muted font-medium mb-1">Email</Text>
               <Text className="text-base text-foreground font-semibold">{user?.email}</Text>
             </View>
 
+            {obreiro?.setor && obreiro?.congregacao && (
+              <View className="bg-surface rounded-lg p-4 border border-border flex-row justify-between">
+
+                {/* Setor */}
+                  <View className="flex-1">
+                  <Text className="text-xs text-muted font-medium mb-1">Setor</Text>
+                  <Text className="text-base text-foreground font-semibold">
+                  {obreiro.setor}
+                  </Text>
+                </View>
+
+                {/* Congreção */}
+                <View className="flex-1">
+                  <Text className="text-xs text-muted font-medium mb-1">Congregação</Text>
+                  <Text className="text-base text-foreground font-semibold">
+                  {obreiro.congregacao}
+                  </Text>
+                </View>
+
+              </View>
+            )}
+
             {obreiro?.telefone && (
               <View className="bg-surface rounded-lg p-4 border border-border">
                 <Text className="text-xs text-muted font-medium mb-1">Telefone</Text>
-                <Text className="text-base text-foreground font-semibold">{obreiro.telefone}</Text>
+                <Text className="text-base text-foreground font-semibold">{formatarTelefone(obreiro.telefone)}</Text>
               </View>
             )}
 

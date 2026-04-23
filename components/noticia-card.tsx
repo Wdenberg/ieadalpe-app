@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 
 interface NoticiaCardProps {
   titulo: string;
+  autor_nome:string;
   resumo?: string;
   imagemUrl?: string;
   data: string;
