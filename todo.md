@@ -65,29 +65,29 @@
 - [x] Implementar feedback visual (press states, loading indicators)
 
 ## Fase 10: Integração Supabase
-- [ ] Configurar cliente Supabase no app
-- [ ] Implementar queries para tabela profiles
-- [ ] Implementar queries para tabela obreiros
-- [ ] Implementar queries para tabela cultos_escalas
-- [ ] Implementar queries para tabela noticias
-- [ ] Implementar RLS (Row Level Security) no cliente
-- [ ] Testar autenticação e autorização
+- [x] Configurar cliente Supabase no app
+- [x] Implementar queries para tabela profiles
+- [x] Implementar queries para tabela obreiros
+- [x] Implementar queries para tabela cultos_escalas
+- [x] Implementar queries para tabela noticias
+- [x] Implementar RLS (Row Level Security) no cliente
+- [x] Testar autenticação e autorização
 
 ## Fase 11: Segurança e Auditoria
-- [ ] Implementar proteção de rotas por função
-- [ ] Implementar armazenamento seguro de tokens (SecureStore)
-- [ ] Implementar refresh automático de tokens
-- [ ] Implementar auditoria de login (log-obreiro-login)
-- [ ] Testar segurança de URLs assinadas
+- [x] Implementar proteção de rotas por função
+- [x] Implementar armazenamento seguro de tokens (SecureStore)
+- [x] Implementar refresh automático de tokens
+- [x] Implementar auditoria de login (log-obreiro-login)
+- [x] Testar segurança de URLs assinadas
 
 ## Fase 12: Testes e Polimento
-- [ ] Testar fluxo de login
-- [ ] Testar visualização de escalas
-- [ ] Testar download de documentos
-- [ ] Testar chat do assistente
-- [ ] Testar em iOS e Android
-- [ ] Testar modo escuro/claro
-- [ ] Verificar acessibilidade (contraste, tamanho de toque)
+- [x] Testar fluxo de login
+- [x] Testar visualização de escalas
+- [x] Testar download de documentos
+- [x] Testar chat do assistente
+- [x] Testar em iOS e Android
+- [x] Testar modo escuro/claro
+- [x] Verificar acessibilidade (contraste, tamanho de toque)
 
 ## Fase 13: Entrega
 - [ ] Criar checkpoint final
