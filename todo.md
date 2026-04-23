@@ -25,9 +25,9 @@
 
 ## Fase 4: Tela de Escalas
 - [x] Criar tela de Escalas com lista completa
-- [ ] Implementar filtros (por data, por tipo de culto)
+- [x] Implementar filtros (por data, por tipo de culto)
 - [x] Criar card de escala com informações (data, hora, tipo, local, função)
-- [ ] Implementar detalhe de escala
+- [x] Implementar detalhe de escala
 - [x] Integrar com tabela cultos_escalas
 
 ## Fase 5: Tela de Documentos
