@@ -60,11 +60,15 @@ export function useSecureToken() {
    */
   const clearTokens = useCallback(async (): Promise<void> => {
     try {
-      await SecureStore.deleteItemAsync(TOKEN_KEY);
-      await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+      await SecureStore.deleteItemAsync(TOKEN_KEY).catch(() => {
+        // Ignorar erro se a chave nao existe
+      });
+      await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY).catch(() => {
+        // Ignorar erro se a chave nao existe
+      });
     } catch (error) {
       console.error('Erro ao limpar tokens:', error);
-      throw new Error('Falha ao limpar tokens');
+      // Nao lancar erro para nao quebrar o logout
     }
   }, []);
 
