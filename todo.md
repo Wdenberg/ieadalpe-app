@@ -50,11 +50,11 @@
 - [ ] Implementar botão de editar perfil
 - [x] Implementar botão de logout
 
-## Fase 8: Assistente do Obreiro (IA)
-- [x] Criar interface de chat simples
+## Fase 8: Assistente do Obreiro (IA) - FUTURO
+- [ ] Criar interface de chat simples
 - [ ] Implementar integração com Edge Functions para consultas
 - [ ] Implementar respostas sobre escalas, documentos, avisos
-- [x] Implementar histórico de conversa
+- [ ] Implementar histórico de conversa
 - [ ] Integrar com LLM para processamento de linguagem natural
 
 ## Fase 9: Navegação e UI

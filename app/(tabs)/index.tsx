@@ -201,15 +201,7 @@ export default function DashboardScreen() {
             )}
           </View>
 
-          {/* Assistente do Obreiro */}
-          <Link href="/(tabs)/assistente" asChild>
-            <TouchableOpacity className="bg-tertiary rounded-lg p-4 items-center mb-6">
-              <Text className="text-surface font-bold text-base">🤖 Assistente do Obreiro</Text>
-              <Text className="text-surface/80 text-xs mt-1">
-                Faça perguntas sobre escalas e documentos
-              </Text>
-            </TouchableOpacity>
-          </Link>
+
         </View>
       </ScrollView>
     </ScreenContainer>
