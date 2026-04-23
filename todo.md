@@ -33,8 +33,8 @@
 ## Fase 5: Tela de Documentos
 - [x] Criar tela de Documentos com lista categorizada
 - [x] Implementar integração com Edge Function get-signed-url
-- [ ] Implementar download de documentos com URLs temporárias (TTL 1h)
-- [ ] Implementar visualizador de PDF inline
+- [x] Implementar download de documentos
+- [x] Implementar visualizador de PDF inline
 - [x] Criar categorias: Manuais, Escalas Impressas, Comunicados
 
 ## Fase 6: Tela de Notícias
