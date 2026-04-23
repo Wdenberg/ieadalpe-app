@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ScrollView, Text, View, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ScreenContainer } from '@/components/screen-container';
 import { supabase } from '@/lib/supabase';
 import { useColors } from '@/hooks/use-colors';
 import { cn } from '@/lib/utils';
+import { useBiometricAuth } from '@/hooks/use-biometric-auth';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -13,6 +14,17 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const {
+    isBiometricAvailable,
+    biometricType,
+    isAuthenticating,
+    checkBiometricAvailability,
+    authenticate,
+  } = useBiometricAuth();
+
+  useEffect(() => {
+    checkBiometricAvailability();
+  }, [checkBiometricAvailability]);
 
   const handleLogin = async () => {
     setError(null);
@@ -29,6 +41,16 @@ export default function LoginScreen() {
         return;
       }
 
+      // Disparar função de log de login
+      try {
+        await supabase.functions.invoke('log-obreiro-login', {
+          body: { action: 'login' },
+        });
+      } catch (logError) {
+        console.error('Erro ao registrar log de login:', logError);
+        // Continuar mesmo se o log falhar
+      }
+
       // Login bem-sucedido, redirecionar para dashboard
       router.replace('/(tabs)');
     } catch (err) {
@@ -36,6 +58,33 @@ export default function LoginScreen() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBiometricLogin = async () => {
+    setError(null);
+    const result = await authenticate();
+
+    if (result.success) {
+      // Se a autenticação biométrica foi bem-sucedida,
+      // o usuário já deve estar autenticado no Supabase
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        // Disparar função de log de login
+        try {
+          await supabase.functions.invoke('log-obreiro-login', {
+            body: { action: 'biometric_login' },
+          });
+        } catch (logError) {
+          console.error('Erro ao registrar log de login biométrico:', logError);
+        }
+
+        router.replace('/(tabs)');
+      } else {
+        setError('Sessão expirada. Por favor, faça login novamente.');
+      }
+    } else {
+      setError(result.error || 'Falha na autenticação biométrica');
     }
   };
 
@@ -68,7 +117,7 @@ export default function LoginScreen() {
                 placeholderTextColor={colors.muted}
                 value={email}
                 onChangeText={setEmail}
-                editable={!loading}
+                editable={!loading && !isAuthenticating}
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
@@ -86,7 +135,7 @@ export default function LoginScreen() {
                 placeholderTextColor={colors.muted}
                 value={password}
                 onChangeText={setPassword}
-                editable={!loading}
+                editable={!loading && !isAuthenticating}
                 secureTextEntry
               />
             </View>
@@ -101,10 +150,10 @@ export default function LoginScreen() {
             {/* Login Button */}
             <TouchableOpacity
               onPress={handleLogin}
-              disabled={loading || !email || !password}
+              disabled={loading || isAuthenticating || !email || !password}
               className={cn(
                 'py-3 rounded-lg items-center justify-center',
-                loading || !email || !password ? 'bg-primary/50' : 'bg-primary'
+                loading || isAuthenticating || !email || !password ? 'bg-primary/50' : 'bg-primary'
               )}
             >
               {loading ? (
@@ -114,8 +163,31 @@ export default function LoginScreen() {
               )}
             </TouchableOpacity>
 
+            {/* Biometric Login Button */}
+            {isBiometricAvailable && (
+              <TouchableOpacity
+                onPress={handleBiometricLogin}
+                disabled={isAuthenticating || loading}
+                className="py-3 rounded-lg items-center justify-center border-2 border-warning"
+              >
+                {isAuthenticating ? (
+                  <ActivityIndicator color={colors.warning} />
+                ) : (
+                  <View className="flex-row items-center gap-2">
+                    <Text className="text-2xl">{biometricType === 'Face ID' ? '👤' : '👆'}</Text>
+                    <Text className="text-warning font-semibold text-base">
+                      Entrar com {biometricType}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            )}
+
             {/* Forgot Password Link */}
-            <TouchableOpacity className="items-center py-2">
+            <TouchableOpacity
+              onPress={() => router.push('/auth/forgot-password')}
+              className="items-center py-2"
+            >
               <Text className="text-primary text-sm font-semibold">Esqueceu a senha?</Text>
             </TouchableOpacity>
           </View>

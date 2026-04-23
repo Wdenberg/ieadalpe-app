@@ -10,10 +10,10 @@
 - [x] Integrar SDK Supabase para login
 - [x] Criar tela de Login com email/CPF e senha
 - [x] Implementar proteção de rotas baseada em has_role (admin/obreiro)
-- [ ] Implementar autenticação com biometria (Face ID/Fingerprint)
-- [ ] Disparar função log-obreiro-login ao fazer login
+- [x] Implementar autenticação com biometria (Face ID/Fingerprint)
+- [x] Disparar função log-obreiro-login ao fazer login
 - [x] Implementar logout
-- [ ] Criar tela de "Esqueceu a Senha"
+- [x] Criar tela de "Esqueceu a Senha"
 
 ## Fase 3: Dashboard do Obreiro
 - [x] Criar tela Dashboard com saudação personalizada
