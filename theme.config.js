@@ -1,17 +1,23 @@
 /** @type {const} */
 const themeColors = {
-  // Paleta eclesiástica IEADALPE
-  primary: { light: '#8B3A3A', dark: '#A84A4A' }, // Vinho
-  secondary: { light: '#D4AF37', dark: '#E6C547' }, // Dourado
-  tertiary: { light: '#2D5016', dark: '#3D6B1F' }, // Verde
-  background: { light: '#F5F1E8', dark: '#1A1815' }, // Bege claro / Escuro
-  surface: { light: '#FFFFFF', dark: '#2A2520' }, // Branco / Escuro
-  foreground: { light: '#1A1A1A', dark: '#F5F1E8' }, // Texto escuro / claro
-  muted: { light: '#666666', dark: '#A0A0A0' }, // Texto secundário
-  border: { light: '#E5E0D5', dark: '#3D3530' }, // Bordas
-  success: { light: '#2D5016', dark: '#3D6B1F' }, // Verde (sucesso)
-  warning: { light: '#D4AF37', dark: '#E6C547' }, // Dourado (aviso)
-  error: { light: '#8B3A3A', dark: '#A84A4A' }, // Vinho (erro)
+  // Cores Oficiais IEADALPE - Baseadas no Design do Site
+  primary: { light: '#5A0A0A', dark: '#5A0A0A' },        // Vinho/Bordô Profundo
+  secondary: { light: '#2F6F55', dark: '#2F6F55' },      // Verde Escuro
+  tertiary: { light: '#E8A430', dark: '#E8A430' },       // Dourado
+  
+  // Backgrounds e Surfaces
+  background: { light: '#F4E6D2', dark: '#2B1F1F' },     // Bege Claro (light), Escuro (dark)
+  surface: { light: '#FFFFFF', dark: '#3D2F2F' },        // Branco (light), Escuro (dark)
+  
+  // Text Colors
+  foreground: { light: '#2B1F1F', dark: '#F4E6D2' },     // Escuro (light), Bege (dark)
+  muted: { light: '#6B5B52', dark: '#B8A89F' },          // Cinza Médio
+  
+  // Utility Colors
+  border: { light: '#E8D4C0', dark: '#4D3F38' },         // Borde claro/escuro
+  success: { light: '#2F6F55', dark: '#5FBF8F' },        // Verde
+  warning: { light: '#E8A430', dark: '#FFB84D' },        // Dourado/Laranja
+  error: { light: '#5A0A0A', dark: '#D97070' },          // Vinho/Rosa
 };
 
 module.exports = { themeColors };

@@ -5,18 +5,20 @@ Aplicativo móvel para a Igreja Evangélica Assembleia de Deus em Abreu e Lima (
 
 ---
 
-## Paleta de Cores Eclesiástica
+## Paleta de Cores Oficial IEADALPE
+
+**Baseada no design oficial do site da IEADALPE**
 
 | Token | Cor | Uso |
 |-------|-----|-----|
-| **Primary (Vinho)** | `#8B3A3A` | Botões principais, destaques, CTA |
-| **Secondary (Dourado)** | `#D4AF37` | Acentos, ícones especiais, destaque |
-| **Tertiary (Verde)** | `#2D5016` | Sucesso, confirmações, status positivo |
-| **Background (Bege)** | `#F5F1E8` | Fundo principal da app |
+| **Primary (Vinho/Bordão)** | `#5A0A0A` | Botões principais, headers, destaques, CTA |
+| **Secondary (Verde Escuro)** | `#2F6F55` | Elementos secundários, confirmações, status positivo |
+| **Tertiary (Dourado)** | `#E8A430` | Acentos, ícones especiais, destaque, avisos |
+| **Background (Bege Claro)** | `#F4E6D2` | Fundo principal da app |
 | **Surface (Branco)** | `#FFFFFF` | Cards, superfícies elevadas |
-| **Text Primary** | `#1A1A1A` | Títulos, texto principal |
-| **Text Secondary** | `#666666` | Subtítulos, texto secundário |
-| **Border** | `#E5E0D5` | Divisores, bordas |
+| **Text Primary** | `#2B1F1F` | Títulos, texto principal |
+| **Text Secondary (Muted)** | `#6B5B52` | Subtítulos, texto secundário |
+| **Border** | `#E8D4C0` | Divisores, bordas |
 
 ---
 

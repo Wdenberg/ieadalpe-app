@@ -101,3 +101,11 @@
 - [x] Implementar navegação para detalhe de notícia
 - [x] Exibir imagem em tamanho maior
 - [x] Mostrar conteúdo completo da notícia
+
+
+## Fase 12: Atualização de Design - Paleta de Cores Oficial
+- [x] Atualizar theme.config.js com cores oficiais (Vinho #5A0A0A, Bege #F4E6D2, Verde #2F6F55, Dourado #E8A430)
+- [x] Atualizar tailwind.config.js com nova paleta
+- [ ] Revisar e atualizar todas as telas com novas cores
+- [ ] Testar consistência de cores em todos os componentes
+- [x] Atualizar design.md com nova paleta
