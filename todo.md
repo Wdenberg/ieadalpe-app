@@ -40,14 +40,14 @@
 ## Fase 6: Tela de Notícias
 - [x] Criar tela de Notícias com lista
 - [x] Implementar card de notícia (imagem, título, resumo, data)
-- [ ] Implementar detalhe de notícia com conteúdo completo
+- [x] Implementar detalhe de notícia com conteúdo completo
 - [x] Integrar com tabela noticias
 
 ## Fase 7: Tela de Perfil
 - [x] Criar tela de Perfil com dados do obreiro
-- [ ] Implementar exibição de foto de perfil
-- [ ] Implementar histórico de escalas (últimas 10)
-- [ ] Implementar botão de editar perfil
+- [x] Implementar exibição de foto de perfil
+- [x] Implementar histórico de escalas (últimas 10)
+- [x] Implementar botão de editar perfil
 - [x] Implementar botão de logout
 
 ## Fase 8: Assistente do Obreiro (IA) - FUTURO
