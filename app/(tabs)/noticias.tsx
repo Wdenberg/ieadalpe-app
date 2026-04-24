@@ -69,6 +69,7 @@ export default function NoticiasScreen() {
                 <NoticiaCard
                   key={noticia.id}
                   titulo={noticia.titulo}
+                  autor_nome={noticia.autor_nome || 'IEADALPE'}
                   resumo={noticia.resumo}
                   imagemUrl={noticia.imagem_url}
                   data={noticia.created_at}
