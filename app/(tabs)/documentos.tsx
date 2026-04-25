@@ -14,7 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useDocumentDownload } from '@/hooks/use-document-download';
 import { PDFViewer } from '@/components/pdf-viewer';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/hooks/use-auth';
+
 
 interface Documento {
   id: string;
@@ -49,7 +49,7 @@ const {
   isLoading,
   error,
 } = useQuery({
-  queryKey: ['documentos-obreiros'], 
+  queryKey: ['documentos', userId], 
   queryFn: async () => {
     // 1. Pega a sessão atual do Supabase
     const { data: { session } } = await supabase.auth.getSession();
@@ -87,16 +87,22 @@ const {
     }, [] as Array<{ categoria: string; docs: Documento[] }>);
   }, [documentos]);
 
-  // 🔥 Gerar URL assinada
- // 🔥 Gerar URL assinada
+
+  const normalizePath = (path: string) => {
+  return path
+    .replace('private://', '')
+    .trim();
+};
+
 const getSignedUrl = async (path: string) => {
-  // Se o path vier como "private://documentos/arquivo.pdf", 
-  // precisamos apenas de "arquivo.pdf"
-  const cleanPath = path.replace('private://documentos/', '');
-  console.log("Tentando buscar o arquivo:", cleanPath); // Log para debug
+ 
+  const cleanPath = normalizePath(path);
+  console.log("Tentando buscar o arquivo:", cleanPath); 
+  console.log("PATH ORIGINAL:", path);
+  console.log("PATH LIMPO:", cleanPath);// Log para debug
 
   const { data, error } = await supabase.storage
-    .from('documentos') // Nome do seu bucket
+    .from('media-private')  // Nome do seu bucket
     .createSignedUrl(cleanPath, 60 * 60);
 
   if (error) {
@@ -109,9 +115,7 @@ const getSignedUrl = async (path: string) => {
 
   // 🔥 Abrir PDF
   const handleOpenDocument = async (documento: Documento) => {
-
-    const pathLimpo = documento.arquivo_url.replace('private://', '');
-    const signedUrl = await getSignedUrl(pathLimpo);
+    const signedUrl = await getSignedUrl(documento.arquivo_url);
 
     if (!signedUrl) return;
 

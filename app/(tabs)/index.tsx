@@ -10,12 +10,10 @@ import { supabase } from '@/lib/supabase';
 
 interface Escala {
   id: string;
-  data_culto: string;
-  hora_inicio: string;
-  tipo_culto: string;
-  local: string;
-  funcao_escala: string;
-  confirmado: boolean;
+  nome: string;
+  data_inicio: string;
+  data_fim: string;
+  atual: boolean;
 }
 
 interface Noticia {
@@ -62,11 +60,9 @@ export default function DashboardScreen() {
         const { data: escalasData } = await supabase
           .from('cultos_escalas')
           .select('*')
-          .eq('obreiro_id', obreiroData?.id || '')
-          .gte('data_culto', new Date().toISOString())
-          .order('data_culto', { ascending: true })
-          .limit(5);
-
+          .gte('data_inicio', new Date().toISOString())
+          .order('data_fim', { ascending: true })
+          .limit(2);
         if (escalasData) {
           setEscalas(escalasData);
         }
@@ -116,7 +112,7 @@ export default function DashboardScreen() {
               onPress={() => signOut()}
               className="bg-surface/20 rounded-full p-2"
             >
-              <Text className="text-surface font-bold">Sair</Text>
+              <Text className="bg-secondary rounded-lg p-4 items-center flex-row justify-center gap-2 active:opacity-70">Sair</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -136,15 +132,14 @@ export default function DashboardScreen() {
 
             {escalas.length > 0 ? (
               <View>
-                {escalas.slice(0, 3).map((escala) => (
+                {escalas.slice(0, 2).map((escala) => (
                   <EscalaCard
                     key={escala.id}
-                    data={escala.data_culto}
-                    hora={escala.hora_inicio}
-                    tipo={escala.tipo_culto}
-                    funcao={escala.funcao_escala}
-                    local={escala.local}
-                    confirmado={escala.confirmado}
+                    nome={escala.nome}
+                    data_inicio={escala.data_inicio}
+                    data_fim={escala.data_fim}
+                    atual={escala.atual}
+                    
                     onPress={() => router.push('/(tabs)/escalas')}
                   />
                 ))}

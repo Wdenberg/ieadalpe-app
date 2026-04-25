@@ -3,22 +3,20 @@ import { useColors } from '@/hooks/use-colors';
 import { cn } from '@/lib/utils';
 
 interface EscalaCardProps {
-  data: string;
-  hora: string;
-  tipo: string;
-  funcao: string;
-  local: string;
-  confirmado: boolean;
+
+  nome: string;
+  data_inicio: string;
+  data_fim: string;
+  atual: boolean;
   onPress?: () => void;
 }
 
+
 export function EscalaCard({
-  data,
-  hora,
-  tipo,
-  funcao,
-  local,
-  confirmado,
+  nome,
+  data_fim,
+  data_inicio,
+  atual,
   onPress,
 }: EscalaCardProps) {
   const colors = useColors();
@@ -37,34 +35,34 @@ export function EscalaCard({
       onPress={onPress}
       className={cn(
         'bg-surface rounded-lg p-4 mb-3 border',
-        confirmado ? 'border-tertiary' : 'border-border'
+        atual ? 'border-tertiary' : 'border-border'
       )}
     >
-      <View className="flex-row justify-between items-start mb-3">
+      <View className="flex-row-reverse justify-between items-start mb-2">
         <View className="flex-1">
-          <Text className="text-sm text-muted font-medium">{formatDate(data)}</Text>
-          <Text className="text-lg font-bold text-foreground mt-1">{tipo}</Text>
+          <Text className="text-lg font-bold text-foreground mt-1">{atual}</Text>
         </View>
-        {confirmado && (
+        {atual && (
           <View className="bg-tertiary rounded-full px-3 py-1">
-            <Text className="text-xs font-semibold text-surface">Confirmado</Text>
+            <Text className="text-xs font-semibold text-surface">Atual</Text>
           </View>
         )}
       </View>
 
       <View className="gap-2">
         <View className="flex-row items-center">
-          <Text className="text-xs text-muted font-medium w-16">Horário:</Text>
-          <Text className="text-sm text-foreground font-semibold">{hora}</Text>
+          <Text className="text-xs text-muted font-medium w-16">Nome:</Text>
+          <Text className="text-sm text-foreground font-semibold">{nome}</Text>
+        </View>
+         <View className="flex-row items-center">
+          <Text className="text-xs text-muted font-medium w-16">Inicio:</Text>
+          <Text className="text-sm text-foreground font-semibold">{formatDate(data_inicio)}</Text>
         </View>
         <View className="flex-row items-center">
-          <Text className="text-xs text-muted font-medium w-16">Função:</Text>
-          <Text className="text-sm text-foreground font-semibold">{funcao}</Text>
+          <Text className="text-xs text-muted font-medium w-16">Fim:</Text>
+          <Text className="text-sm text-foreground font-semibold">{formatDate(data_fim)}</Text>
         </View>
-        <View className="flex-row items-center">
-          <Text className="text-xs text-muted font-medium w-16">Local:</Text>
-          <Text className="text-sm text-foreground font-semibold">{local}</Text>
-        </View>
+        
       </View>
     </TouchableOpacity>
   );

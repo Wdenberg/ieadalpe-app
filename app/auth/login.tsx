@@ -163,7 +163,7 @@ export default function LoginScreen() {
               {loading ? (
                 <ActivityIndicator color={colors.surface} />
               ) : (
-                <Text className="text-surface font-semibold text-base">Entrar</Text>
+                <Text className="py-2 text-surface font-semibold text-base">Entrar</Text>
               )}
             </TouchableOpacity>
 

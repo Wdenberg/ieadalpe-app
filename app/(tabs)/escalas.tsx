@@ -1,61 +1,63 @@
-import { ScrollView, Text, View, ActivityIndicator, TouchableOpacity, TextInput } from 'react-native';
-import { useRouter } from 'expo-router';
+import {
+  ScrollView,
+  Text,
+  View,
+  ActivityIndicator,
+  TouchableOpacity,
+  TextInput,
+} from 'react-native';
 import { ScreenContainer } from '@/components/screen-container';
 import { useAuth } from '@/lib/auth-context';
-import { EscalaCard } from '@/components/escala-card';
 import { useColors } from '@/hooks/use-colors';
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { useDocumentDownload } from '@/hooks/use-document-download';
 
 interface Escala {
   id: string;
-  data_culto: string;
-  hora_inicio: string;
-  tipo_culto: string;
-  local: string;
-  funcao_escala: string;
-  confirmado: boolean;
+  nome: string;
+  data_inicio: string;
+  data_fim: string;
+  arquivo_url: string;
+  atual: boolean;
+  created_at: string;
 }
 
-type FilterType = 'todas' | 'proximas' | 'passadas' | 'confirmadas' | 'pendentes';
+type FilterType = 'todas' | 'atual' | 'passadas';
 
 export default function EscalasScreen() {
   const colors = useColors();
-  const router = useRouter();
   const { user } = useAuth();
+
   const [escalas, setEscalas] = useState<Escala[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState('');
   const [filterType, setFilterType] = useState<FilterType>('todas');
-  const [selectedTipoCulto, setSelectedTipoCulto] = useState<string | null>(null);
 
+  const {
+    isDownloading,
+    downloadProgress,
+    downloadDocument,
+  } = useDocumentDownload();
+
+  // 🔥 Buscar escalas
   useEffect(() => {
     const fetchEscalas = async () => {
       if (!user) return;
 
       try {
-        // Get obreiro ID
-        const { data: obreiroData } = await supabase
-          .from('obreiros')
-          .select('id')
-          .eq('user_id', user.id)
-          .single();
-
-        if (!obreiroData) return;
-
-        // Fetch escalas
-        const { data: escalasData } = await supabase
+        
+        const { data, error } = await supabase
           .from('cultos_escalas')
           .select('*')
-          .eq('obreiro_id', obreiroData.id)
-          .order('data_culto', { ascending: true });
+          .order('created_at', { ascending: false });
 
-        if (escalasData) {
-          setEscalas(escalasData);
-        }
-      } catch (error) {
-        console.error('Erro ao carregar escalas:', error);
+        if (error) throw error;
+
+        setEscalas(data || []);
+      } catch (err) {
+        console.error('Erro ao carregar escalas:', err);
       } finally {
         setLoading(false);
       }
@@ -64,51 +66,54 @@ export default function EscalasScreen() {
     fetchEscalas();
   }, [user]);
 
-  // Get unique tipos de culto for filter
-  const tiposCulto = useMemo(() => {
-    return Array.from(new Set(escalas.map(e => e.tipo_culto))).sort();
-  }, [escalas]);
+  // 🔥 Gerar URL assinada
+  const getSignedUrl = async (path: string) => {
+    const cleanPath = path.replace('private://', '').trim();
 
-  // Filter escalas based on criteria
+    const { data, error } = await supabase.storage
+      .from('media-private')
+      .createSignedUrl(cleanPath, 60 * 60);
+
+    if (error) {
+      console.error('Erro ao gerar URL:', error);
+      return null;
+    }
+
+    return data?.signedUrl;
+  };
+
+  // 🔥 Download
+  const handleDownload = async (escala: Escala) => {
+    const signedUrl = await getSignedUrl(escala.arquivo_url);
+
+    if(!signedUrl) return;
+
+    await downloadDocument(signedUrl, `${escala.nome}.pdf`);
+  };
+
+  // 🔥 Filtros
   const filteredEscalas = useMemo(() => {
     const now = new Date();
-    now.setHours(0, 0, 0, 0);
 
-    let filtered = escalas;
+    let result = escalas;
 
-    // Filter by status
-    if (filterType === 'proximas') {
-      filtered = filtered.filter(e => new Date(e.data_culto) >= now);
+    if (filterType === 'atual') {
+      result = result.filter(e => new Date(e.data_inicio) >= now);
     } else if (filterType === 'passadas') {
-      filtered = filtered.filter(e => new Date(e.data_culto) < now);
-    } else if (filterType === 'confirmadas') {
-      filtered = filtered.filter(e => e.confirmado);
-    } else if (filterType === 'pendentes') {
-      filtered = filtered.filter(e => !e.confirmado);
+      result = result.filter(e => new Date(e.data_fim) < now);
     }
 
-    // Filter by tipo de culto
-    if (selectedTipoCulto) {
-      filtered = filtered.filter(e => e.tipo_culto === selectedTipoCulto);
-    }
-
-    // Filter by search text
     if (searchText.trim()) {
       const search = searchText.toLowerCase();
-      filtered = filtered.filter(e =>
-        e.tipo_culto.toLowerCase().includes(search) ||
-        e.local.toLowerCase().includes(search) ||
-        e.funcao_escala.toLowerCase().includes(search)
+      result = result.filter(e =>
+        e.nome.toLowerCase().includes(search)
       );
     }
 
-    return filtered;
-  }, [escalas, filterType, selectedTipoCulto, searchText]);
+    return result;
+  }, [escalas, filterType, searchText]);
 
-  const handleSelectEscala = (escalaId: string) => {
-    router.push(`/(tabs)/escalas/${escalaId}`);
-  };
-
+  // 🔥 Loading
   if (loading) {
     return (
       <ScreenContainer className="items-center justify-center">
@@ -120,33 +125,35 @@ export default function EscalasScreen() {
   return (
     <ScreenContainer className="p-0">
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        
         {/* Header */}
         <View className="bg-primary px-6 py-6">
-          <Text className="text-2xl font-bold text-surface">Minhas Escalas</Text>
+          <Text className="text-2xl font-bold text-surface">
+            Escalas
+          </Text>
           <Text className="text-sm text-surface/70 mt-1">
-            {filteredEscalas.length} de {escalas.length} escala{escalas.length !== 1 ? 's' : ''}
+            {filteredEscalas.length} de {escalas.length}
           </Text>
         </View>
 
-        {/* Content */}
         <View className="px-6 py-6 gap-4">
-          {/* Search Bar */}
+
+          {/* Busca */}
           <TextInput
             className={cn(
-              'px-4 py-3 rounded-lg border text-foreground',
-              'bg-surface border-border'
+              'px-4 py-3 rounded-lg border',
+              'bg-surface border-border text-foreground'
             )}
-            placeholder="Buscar por tipo, local ou função..."
+            placeholder="Buscar escala..."
             placeholderTextColor={colors.muted}
             value={searchText}
             onChangeText={setSearchText}
           />
 
-          {/* Filter Buttons */}
-          <View className="gap-3">
-            {/* Status Filters */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="gap-2">
-              {(['todas', 'proximas', 'passadas', 'confirmadas', 'pendentes'] as FilterType[]).map((filter) => (
+          {/* Filtros */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View className="flex-row gap-2">
+              {(['todas', 'atual', 'passadas'] as FilterType[]).map((filter) => (
                 <TouchableOpacity
                   key={filter}
                   onPress={() => setFilterType(filter)}
@@ -159,97 +166,62 @@ export default function EscalasScreen() {
                 >
                   <Text
                     className={cn(
-                      'font-semibold text-sm',
+                      'text-sm font-semibold',
                       filterType === filter ? 'text-surface' : 'text-foreground'
                     )}
                   >
                     {filter === 'todas' && 'Todas'}
-                    {filter === 'proximas' && 'Próximas'}
+                    {filter === 'atual' && 'Atual'}
                     {filter === 'passadas' && 'Passadas'}
-                    {filter === 'confirmadas' && '✓ Confirmadas'}
-                    {filter === 'pendentes' && '⏳ Pendentes'}
                   </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-
-            {/* Tipo de Culto Filters */}
-            {tiposCulto.length > 0 && (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="gap-2">
-                <TouchableOpacity
-                  onPress={() => setSelectedTipoCulto(null)}
-                  className={cn(
-                    'px-4 py-2 rounded-full border',
-                    selectedTipoCulto === null
-                      ? 'bg-secondary border-secondary'
-                      : 'bg-surface border-border'
-                  )}
-                >
-                  <Text
-                    className={cn(
-                      'font-semibold text-sm',
-                      selectedTipoCulto === null ? 'text-surface' : 'text-foreground'
-                    )}
-                  >
-                    Todos os Tipos
-                  </Text>
-                </TouchableOpacity>
-
-                {tiposCulto.map((tipo) => (
-                  <TouchableOpacity
-                    key={tipo}
-                    onPress={() => setSelectedTipoCulto(tipo)}
-                    className={cn(
-                      'px-4 py-2 rounded-full border',
-                      selectedTipoCulto === tipo
-                        ? 'bg-secondary border-secondary'
-                        : 'bg-surface border-border'
-                    )}
-                  >
-                    <Text
-                      className={cn(
-                        'font-semibold text-sm',
-                        selectedTipoCulto === tipo ? 'text-surface' : 'text-foreground'
-                      )}
-                    >
-                      {tipo}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            )}
-          </View>
-
-          {/* Escalas List */}
-          {filteredEscalas.length > 0 ? (
-            <View className="gap-3">
-              {filteredEscalas.map((escala) => (
-                <TouchableOpacity
-                  key={escala.id}
-                  onPress={() => handleSelectEscala(escala.id)}
-                  activeOpacity={0.7}
-                >
-                  <EscalaCard
-                    data={escala.data_culto}
-                    hora={escala.hora_inicio}
-                    tipo={escala.tipo_culto}
-                    funcao={escala.funcao_escala}
-                    local={escala.local}
-                    confirmado={escala.confirmado}
-                  />
                 </TouchableOpacity>
               ))}
             </View>
+          </ScrollView>
+
+          {/* Lista */}
+          {filteredEscalas.length > 0 ? (
+            <View className="gap-4">
+              {filteredEscalas.map((escala) => (
+                <View
+                  key={escala.id}
+                  className="bg-surface rounded-lg p-4 border border-border"
+                >
+                  <Text className="text-base font-bold text-foreground">
+                    {escala.nome}
+                  </Text>
+
+                  <Text className="text-xs text-muted mt-2">
+                    {new Date(escala.data_inicio).toLocaleDateString('pt-BR')} -{" "}
+                    {new Date(escala.data_fim).toLocaleDateString('pt-BR')}
+                  </Text>
+
+                  {escala.atual && (
+                    <Text className="text-xs text-success mt-1">
+                      🔥 Escala Atual
+                    </Text>
+                  )}
+
+                  {/* Botão Download */}
+                  <TouchableOpacity
+                    onPress={() => handleDownload(escala)}
+                    className="mt-3 bg-success rounded-lg py-2 items-center"
+                  >
+                    {isDownloading ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <Text className="text-surface font-semibold">
+                        ⬇ Baixar PDF
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
           ) : (
-            <View className="bg-surface rounded-lg p-6 border border-border items-center gap-2">
-              <Text className="text-2xl">🔍</Text>
-              <Text className="text-muted text-center text-base font-semibold">
+            <View className="items-center mt-10">
+              <Text className="text-muted">
                 Nenhuma escala encontrada
-              </Text>
-              <Text className="text-muted text-center text-xs">
-                {searchText || selectedTipoCulto
-                  ? 'Tente ajustar seus filtros'
-                  : 'Você não possui escalas agendadas no momento'}
               </Text>
             </View>
           )}

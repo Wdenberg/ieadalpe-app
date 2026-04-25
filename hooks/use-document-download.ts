@@ -35,65 +35,58 @@ export function useDocumentDownload() {
   }, []);
 
   const downloadDocument = useCallback(
-    async (filePath: string, fileName: string): Promise<boolean> => {
-      setError(null);
-      setIsDownloading(true);
-      setDownloadProgress(null);
+  async (url: string, fileName: string): Promise<boolean> => {
+    setError(null);
+    setIsDownloading(true);
+    setDownloadProgress(null);
 
-      try {
-        // Obter URL assinada
-        const signedUrl = await getSignedUrl(filePath);
-        if (!signedUrl) {
-          setIsDownloading(false);
-          return false;
-        }
+    try {
+      const downloadPath = `${FileSystem.documentDirectory}${fileName}`;
 
-        // Definir caminho de download
-        const downloadPath = `${FileSystem.documentDirectory}${fileName}`;
+      const downloadResumable = FileSystem.createDownloadResumable(
+        url, // 🔥 agora é URL direta
+        downloadPath,
+        {},
+        (progressEvent) => {
+          const progress =
+            progressEvent.totalBytesWritten /
+            progressEvent.totalBytesExpectedToWrite;
 
-        // Fazer download
-        const downloadResumable = FileSystem.createDownloadResumable(
-          signedUrl,
-          downloadPath,
-          {},
-          (downloadProgress) => {
-            const progress = downloadProgress.totalBytesWritten / downloadProgress.totalBytesExpectedToWrite;
-            setDownloadProgress({
-              progress,
-              loaded: downloadProgress.totalBytesWritten,
-              total: downloadProgress.totalBytesExpectedToWrite,
-            });
-          }
-        );
-
-        const result = await downloadResumable.downloadAsync();
-        if (!result) {
-          setError('Erro ao fazer download do documento');
-          setIsDownloading(false);
-          return false;
-        }
-
-        // Compartilhar ou abrir o documento
-        const canShare = await Sharing.isAvailableAsync();
-        if (canShare) {
-          await Sharing.shareAsync(result.uri, {
-            mimeType: 'application/pdf',
-            dialogTitle: `Compartilhar ${fileName}`,
+          setDownloadProgress({
+            progress,
+            loaded: progressEvent.totalBytesWritten,
+            total: progressEvent.totalBytesExpectedToWrite,
           });
         }
+      );
 
-        setIsDownloading(false);
-        setDownloadProgress(null);
-        return true;
-      } catch (err) {
-        console.error('Erro ao fazer download:', err);
+      const result = await downloadResumable.downloadAsync();
+
+      if (!result) {
         setError('Erro ao fazer download do documento');
-        setIsDownloading(false);
         return false;
       }
-    },
-    [getSignedUrl]
-  );
+
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(result.uri, {
+          mimeType: 'application/pdf',
+          dialogTitle: `Compartilhar ${fileName}`,
+        });
+      }
+
+      return true;
+    } catch (err) {
+      console.error('Erro ao fazer download:', err);
+      setError('Erro ao fazer download do documento');
+      return false;
+    } finally {
+      setIsDownloading(false);
+      setDownloadProgress(null);
+    }
+  },
+  []
+);
 
   const openDocument = useCallback(
     async (filePath: string, fileName: string): Promise<boolean> => {

@@ -63,6 +63,28 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
         }}
       />
+      {/* --- TELAS QUE DEVEM FICAR OCULTAS --- */}
+      <Tabs.Screen
+        name="perfil/editar"
+        options={{
+          href: null, // Isso remove da barra de abas
+        }}
+      />
+
+      <Tabs.Screen
+        name="escalas/[id]"
+        options={{
+          href: null,
+        }}
+      />
+
+      <Tabs.Screen
+        name="noticias/[id]"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
+    
   );
 }

@@ -34,7 +34,7 @@ export function NoticiaCard({
       {imagemUrl && (
         <Image
           source={{ uri: imagemUrl }}
-          className="w-full h-40"
+          style={{ width: '100%', height: 365 }}
           resizeMode="cover"
         />
       )}
