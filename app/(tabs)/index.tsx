@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, TouchableOpacity, ActivityIndicator, FlatList } from 'react-native';
+import { ScrollView, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { ScreenContainer } from '@/components/screen-container';
 import { useAuth } from '@/lib/auth-context';
@@ -7,6 +7,8 @@ import { NoticiaCard } from '@/components/noticia-card';
 import { useColors } from '@/hooks/use-colors';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { Toggle } from '@/components/toggle';
+
 
 interface Escala {
   id: string;
@@ -43,7 +45,7 @@ export default function DashboardScreen() {
   useEffect(() => {
     const fetchData = async () => {
       if (!user) return;
-
+      const ToDay = new Date().toISOString().split('T')[0];
       try {
         // Fetch obreiro data
         const { data: obreiroData } = await supabase
@@ -60,8 +62,8 @@ export default function DashboardScreen() {
         const { data: escalasData } = await supabase
           .from('cultos_escalas')
           .select('*')
-          .gte('data_inicio', new Date().toISOString())
-          .order('data_fim', { ascending: true })
+          .gte('data_fim', ToDay)
+          .order('data_inicio', { ascending: true })
           .limit(2);
         if (escalasData) {
           setEscalas(escalasData);
@@ -100,21 +102,31 @@ export default function DashboardScreen() {
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         {/* Header */}
         <View className="bg-primary px-6 py-8 gap-4">
+
           <View className="flex-row justify-between items-start">
+
+            {/* Infos usuário */}
             <View>
-              <Text className="text-sm text-surface/80 font-medium">Bem-vindo,</Text>
-              <Text className="text-2xl font-bold text-surface mt-1">
+              <Text className="text-sm text-surface/80 font-medium">
+                Bem-vindo,
+              </Text>
+
+              <Text className="font-bold text-surface mt-1">
                 {obreiro?.nome || 'Obreiro'}
               </Text>
-              <Text className="text-sm text-surface/70 mt-1">{obreiro?.funcao}</Text>
+
+              <Text className="text-sm text-surface/70 mt-1">
+                {obreiro?.funcao}
+              </Text>
             </View>
-            <TouchableOpacity
-              onPress={() => signOut()}
-              className="bg-surface/20 rounded-full p-2"
-            >
-              <Text className="bg-secondary rounded-lg p-4 items-center flex-row justify-center gap-2 active:opacity-70">Sair</Text>
-            </TouchableOpacity>
+
+            {/* Ações */}
+            <View className="items-end gap-2">
+              <Toggle />
+            </View>
+
           </View>
+
         </View>
 
         {/* Main Content */}
@@ -135,7 +147,7 @@ export default function DashboardScreen() {
                 {escalas.slice(0, 2).map((escala) => (
                   <EscalaCard
                     key={escala.id}
-                    nome={escala.nome}
+                    nome={escala.nome.toUpperCase()}
                     data_inicio={escala.data_inicio}
                     data_fim={escala.data_fim}
                     atual={escala.atual}
