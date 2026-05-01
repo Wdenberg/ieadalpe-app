@@ -9,10 +9,12 @@ import {
 import { ScreenContainer } from '@/components/screen-container';
 import { useAuth } from '@/lib/auth-context';
 import { useColors } from '@/hooks/use-colors';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo} from 'react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { useDocumentDownload } from '@/hooks/use-document-download';
+
+
 
 interface Escala {
   id: string;
@@ -23,8 +25,27 @@ interface Escala {
   atual: boolean;
   created_at: string;
 }
+interface ItemEscala {
+  area: string
+  created_at: string
+  culto_codigo: string 
+  culto_descricao: string 
+  data: string
+  dia_semana: string 
+  escala_id: string
+  funcao: string 
+  horario: string 
+  id: string
+  igreja: string 
+  obreiro_id: string 
+  obreiro_nome: string 
+  obreiro_titulo: string
+  observacoes: string 
+  pastor_area: string 
+  setor: string 
+}
 
-type FilterType = 'todas' | 'atual' | 'passadas';
+type FilterType = 'todas' | 'atual'  | 'passadas';
 
 export default function EscalasScreen() {
   const colors = useColors();
@@ -34,6 +55,7 @@ export default function EscalasScreen() {
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState('');
   const [filterType, setFilterType] = useState<FilterType>('todas');
+  const [minhasEscalas, setMinhasEscalas] = useState<ItemEscala[]>([]);
 
   const {
     isDownloading,
@@ -41,11 +63,17 @@ export default function EscalasScreen() {
     downloadDocument,
   } = useDocumentDownload();
 
+  const filtros: { value: FilterType; label: string; icon: string }[] = [
+    { value: 'todas', label: 'Todas', icon: '📋' },
+    { value: 'atual', label: 'Atuais', icon: '🔥' },
+    { value: 'passadas', label: 'Antigas', icon: '📁' },
+  ];
+
   // 🔥 Buscar escalas
   useEffect(() => {
     const fetchEscalas = async () => {
       if (!user) return;
-
+      
       try {
         
         const { data, error } = await supabase
@@ -55,6 +83,7 @@ export default function EscalasScreen() {
 
         if (error) throw error;
 
+       
         setEscalas(data || []);
       } catch (err) {
         console.error('Erro ao carregar escalas:', err);
@@ -62,9 +91,42 @@ export default function EscalasScreen() {
         setLoading(false);
       }
     };
+    const fetchMinhasEscalas = async () => {
+     
+      if (!user) return;
+      const hoje = new Date().toISOString().split('T')[0];
 
+      // buscar obreiro
+      const { data: obreiro } = await supabase
+        .from('obreiros')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!obreiro) return;
+
+      // Minhas Escalas
+      const { data, error } = await supabase
+        .from('escalas_itens')
+        .select('*')
+        .eq('obreiro_id', obreiro.id)
+        .gte('data', hoje)
+        .order('data', { ascending: true })
+        .order('horario', {ascending: true});
+    
+      if (error) {
+        console.error(error);
+        return;
+      }
+      
+      setMinhasEscalas(data);
+    };
+    
     fetchEscalas();
+    fetchMinhasEscalas();
+    
   }, [user]);
+
 
   // 🔥 Gerar URL assinada
   const getSignedUrl = async (path: string) => {
@@ -93,14 +155,15 @@ export default function EscalasScreen() {
 
   // 🔥 Filtros
   const filteredEscalas = useMemo(() => {
-    const now = new Date();
+    const today = new Date().toISOString().split('T')[0];
 
     let result = escalas;
 
-    if (filterType === 'atual') {
-      result = result.filter(e => new Date(e.data_inicio) >= now);
-    } else if (filterType === 'passadas') {
-      result = result.filter(e => new Date(e.data_fim) < now);
+
+    if (filterType === 'atual' ) {
+      result = result.filter(e => e.atual);
+    }else if (filterType === 'passadas') {
+      result = result.filter(e => e.data_fim < today);
     }
 
     if (searchText.trim()) {
@@ -151,33 +214,83 @@ export default function EscalasScreen() {
           />
 
           {/* Filtros */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View className="flex-row gap-2">
-              {(['todas', 'atual', 'passadas'] as FilterType[]).map((filter) => (
-                <TouchableOpacity
-                  key={filter}
-                  onPress={() => setFilterType(filter)}
-                  className={cn(
-                    'px-4 py-2 rounded-full border',
-                    filterType === filter
-                      ? 'bg-primary border-primary'
-                      : 'bg-surface border-border'
-                  )}
-                >
-                  <Text
+         <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingRight: 20 }}
+          >
+            <View className="flex-row gap-3">
+
+              {filtros.map((item) => {
+                const active = filterType === item.value;
+
+                return (
+                  <TouchableOpacity
+                    key={item.value}
+                    onPress={() => setFilterType(item.value)}
+                    activeOpacity={0.8}
                     className={cn(
-                      'text-sm font-semibold',
-                      filterType === filter ? 'text-surface' : 'text-foreground'
+                      'px-5 py-3 rounded-full border',
+                      active
+                        ? 'bg-primary border-primary'
+                        : 'bg-surface border-border'
                     )}
                   >
-                    {filter === 'todas' && 'Todas'}
-                    {filter === 'atual' && 'Atual'}
-                    {filter === 'passadas' && 'Passadas'}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <Text
+                      className={cn(
+                        'text-sm font-bold',
+                        active
+                          ? 'text-white'
+                          : 'text-foreground'
+                      )}
+                    >
+                      {item.icon} {item.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+
             </View>
           </ScrollView>
+          
+          <View className="bg-surface rounded-xl p-4 border border-border mb-4">
+            <Text className="text-lg font-bold text-primary mb-3">
+              📅 Minhas Próximas Escalas
+            </Text>
+
+            {minhasEscalas.length > 0 ? (
+              minhasEscalas.map((item) => (
+                <View
+                  key={item.id}
+                  className="border-b border-border py-3"
+                >
+                  <Text className="font-semibold text-foreground">
+                    {new Date(item.data).toLocaleDateString('pt-BR')} - {item.horario}
+                  </Text>
+
+                  <Text className="text-primary font-bold">
+                    {item.area}
+                  </Text>
+
+                  <Text className="text-muted">
+                    {item.pastor_area}
+                  </Text>
+
+                  <Text className="text-foreground">
+                    {item.igreja}
+                  </Text>
+
+                  <Text className="text-sm text-muted">
+                    {item.culto_descricao}
+                  </Text>
+                </View>
+              ))
+            ) : (
+              <Text className="text-muted">
+                Nenhuma escala futura encontrada
+              </Text>
+            )}
+          </View>
 
           {/* Lista */}
           {filteredEscalas.length > 0 ? (
@@ -188,7 +301,7 @@ export default function EscalasScreen() {
                   className="bg-surface rounded-lg p-4 border border-border"
                 >
                   <Text className="text-base font-bold text-foreground">
-                    {escala.nome}
+                    {escala.nome.toLocaleUpperCase()}
                   </Text>
 
                   <Text className="text-xs text-muted mt-2">
@@ -225,6 +338,8 @@ export default function EscalasScreen() {
               </Text>
             </View>
           )}
+
+          {}
         </View>
       </ScrollView>
     </ScreenContainer>

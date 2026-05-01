@@ -23,11 +23,31 @@ interface ObreiroData {
 
 interface Escala {
   id: string;
-  data_culto: string;
-  hora_inicio: string;
-  tipo_culto: string;
-  funcao_escala: string;
-  confirmado: boolean;
+  nome: string;
+  data_inicio: string;
+  data_fim: string;
+  arquivo_url: string;
+  atual: boolean;
+  created_at: string;
+}
+interface ItemEscala {
+  area: string
+  created_at: string
+  culto_codigo: string 
+  culto_descricao: string 
+  data: string
+  dia_semana: string 
+  escala_id: string
+  funcao: string 
+  horario: string 
+  id: string
+  igreja: string 
+  obreiro_id: string 
+  obreiro_nome: string 
+  obreiro_titulo: string
+  observacoes: string 
+  pastor_area: string 
+  setor: string 
 }
 type Funcao = "Pastor" | "Evangelista" | "Presbítero" | "Presbitero";
 
@@ -36,13 +56,14 @@ export default function PerfilScreen() {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const [obreiro, setObreiro] = useState<ObreiroData | null>(null);
-  const [escalas, setEscalas] = useState<Escala[]>([]);
+  const [escalas, setEscalas] = useState<ItemEscala[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingEscalas, setLoadingEscalas] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       if (!user) return;
+      const ToDay = new Date().toISOString().split('T')[0];
       
       try {
         // Fetch obreiro data
@@ -57,12 +78,14 @@ export default function PerfilScreen() {
 
           // Fetch últimas 10 escalas
           setLoadingEscalas(true);
-          const { data: escalasData } = await supabase
-            .from('cultos_escalas')
-            .select('id, data_culto, hora_inicio, tipo_culto, funcao_escala, confirmado')
-            .eq('obreiro_id', obreiroData.id)
-            .order('data_culto', { ascending: false })
-            .limit(10);
+          // Minhas Escalas
+        const { data: escalasData, error } = await supabase
+          .from('escalas_itens')
+          .select('*')
+          .eq('obreiro_id', obreiroData.id)
+          .gte('data', ToDay)
+          .order('data', { ascending: true })
+          .order('horario', {ascending: true});
 
           if (escalasData) {
             setEscalas(escalasData);
@@ -133,7 +156,7 @@ export default function PerfilScreen() {
             </View>
           )}
           <View className="items-center">
-            <Text className="text-2xl font-bold text-surface">{obreiro?.funcao ? formateTitulo(obreiro?.funcao as Funcao) : ""} {obreiro?.nome}</Text>
+            <Text className="text-center font-bold text-surface">{obreiro?.funcao ? formateTitulo(obreiro?.funcao as Funcao) : ""} {obreiro?.nome}</Text>
             <Text className="text-sm text-surface/70 mt-1">{obreiro?.funcao}</Text>
           </View>
 
@@ -220,43 +243,34 @@ export default function PerfilScreen() {
               </View>
             ) : escalas.length > 0 ? (
               <View className="gap-2">
-                {escalas.map((escala) => (
-                  <TouchableOpacity
-                    key={escala.id}
-                    onPress={() => router.push(`/(tabs)/escalas/${escala.id}`)}
-                    className="bg-surface rounded-lg p-4 border border-border active:opacity-70"
-                  >
-                    <View className="flex-row justify-between items-start mb-2">
-                      <View className="flex-1">
-                        <Text className="text-sm font-bold text-foreground">
-                          {escala.tipo_culto}
-                        </Text>
-                        <Text className="text-xs text-muted mt-1">
-                          {formatDate(escala.data_culto)} às {formatTime(escala.hora_inicio)}
-                        </Text>
-                      </View>
-                      <View
-                        className={cn(
-                          'rounded-full px-2 py-1',
-                          escala.confirmado ? 'bg-success/20' : 'bg-warning/20'
-                        )}
-                      >
-                        <Text
-                          className={cn(
-                            'text-xs font-semibold',
-                            escala.confirmado ? 'text-success' : 'text-warning'
-                          )}
-                        >
-                          {escala.confirmado ? '✓' : '⏳'}
-                        </Text>
-                      </View>
+              {escalas.map((escala) => (
+                <TouchableOpacity
+                  key={escala.id}
+                  onPress={() => router.push(`/(tabs)/escalas/${escala.id}`)}
+                  className="bg-surface rounded-lg p-4 border border-border active:opacity-70"
+                >
+                  <View className="flex-row justify-between items-start mb-2">
+                    <View className="flex-1">
+                      <Text className="text-sm font-bold text-foreground">
+                        {escala.culto_descricao}
+                      </Text>
+                      <Text className="text-xs text-muted mt-1">
+                        {formatDate(escala.data)} às {formatTime(escala.horario)}
+                      </Text>
+                      <Text className="text-xs text-muted">
+                        Pastor da Area: {escala.pastor_area}
+                      </Text>
+                      <Text className="text-xs text-muted">
+                      Igreja: {escala.igreja}
+                      </Text>
                     </View>
-                    <Text className="text-xs text-muted">
-                      Função: {escala.funcao_escala}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+                  </View>
+                  <Text className="text-xs text-muted">
+                    {escala.culto_descricao}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
             ) : (
               <View className="bg-surface rounded-lg p-4 border border-border items-center">
                 <Text className="text-muted text-sm text-center">

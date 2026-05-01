@@ -111,6 +111,75 @@ export type Database = {
           updated_at?: string;
         };
       };
+      escalas_itens: {
+          Row: {
+            area: string | null
+            created_at: string
+            culto_codigo: string | null
+            culto_descricao: string | null
+            data: string
+            dia_semana: string | null
+            escala_id: string
+            funcao: string | null
+            horario: string | null
+            id: string
+            igreja: string | null
+            obreiro_id: string | null
+            obreiro_nome: string | null
+            obreiro_titulo: string | null
+            observacoes: string | null
+            pastor_area: string | null
+            setor: string | null
+          }
+          Insert: {
+            area?: string | null
+            created_at?: string
+            culto_codigo?: string | null
+            culto_descricao?: string | null
+            data: string
+            dia_semana?: string | null
+            escala_id: string
+            funcao?: string | null
+            horario?: string | null
+            id?: string
+            igreja?: string | null
+            obreiro_id?: string | null
+            obreiro_nome?: string | null
+            obreiro_titulo?: string | null
+            observacoes?: string | null
+            pastor_area?: string | null
+            setor?: string | null
+          }
+          Update: {
+            area?: string | null
+            created_at?: string
+            culto_codigo?: string | null
+            culto_descricao?: string | null
+            data?: string
+            dia_semana?: string | null
+            escala_id?: string
+            funcao?: string | null
+            horario?: string | null
+            id?: string
+            igreja?: string | null
+            obreiro_id?: string | null
+            obreiro_nome?: string | null
+            obreiro_titulo?: string | null
+            observacoes?: string | null
+            pastor_area?: string | null
+            setor?: string | null
+          }
+          Relationships: [
+            {
+              foreignKeyName: "escalas_itens_escala_id_fkey"
+              columns: ["escala_id"]
+              isOneToOne: false
+              referencedRelation: "cultos_escalas"
+              referencedColumns: ["id"]
+            },
+          ]
+       }
+      
       noticias: {
         Row: {
           id: string;
@@ -146,3 +215,4 @@ export type Database = {
     };
   };
 };
+

@@ -50,9 +50,12 @@ export function EscalaCard({
       </View>
 
       <View className="gap-2">
-        <View className="flex-row items-center">
+        <View className="flex-row items-start">
           <Text className="text-xs text-muted font-medium w-16">Nome:</Text>
-          <Text className="text-sm text-foreground font-semibold">{nome}</Text>
+          <Text className="text-sm text-foreground font-semibold flex-1" 
+          numberOfLines={2} 
+          ellipsizeMode="tail"
+          >{nome}</Text>
         </View>
          <View className="flex-row items-center">
           <Text className="text-xs text-muted font-medium w-16">Inicio:</Text>
