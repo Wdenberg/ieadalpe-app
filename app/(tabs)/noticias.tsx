@@ -3,8 +3,9 @@ import { useRouter } from 'expo-router';
 import { ScreenContainer } from '@/components/screen-container';
 import { NoticiaCard } from '@/components/noticia-card';
 import { useColors } from '@/hooks/use-colors';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import * as Notifications from 'expo-notifications'; // Importar para a notificação local
 
 interface Noticia {
   id: string;
@@ -21,26 +22,57 @@ export default function NoticiasScreen() {
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchNoticias = async () => {
-      try {
-        const { data: noticiasData } = await supabase
-          .from('noticias')
-          .select('id, autor_nome, titulo, resumo, imagem_url, created_at')
-          .order('created_at', { ascending: false });
+  // --- BUSCA DE DADOS ---
+  const fetchNoticias = useCallback(async () => {
+    try {
+      const { data: noticiasData } = await supabase
+        .from('noticias')
+        .select('id, autor_nome, titulo, resumo, imagem_url, created_at')
+        .order('created_at', { ascending: false });
 
-        if (noticiasData) {
-          setNoticias(noticiasData);
-        }
-      } catch (error) {
-        console.error('Erro ao carregar notícias:', error);
-      } finally {
-        setLoading(false);
+      if (noticiasData) {
+        setNoticias(noticiasData);
       }
-    };
-
-    fetchNoticias();
+    } catch (error) {
+      console.error('Erro ao carregar notícias:', error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  // --- REALTIME ---
+  useEffect(() => {
+    fetchNoticias();
+
+    // Criar o canal para escutar novas notícias
+    const channel = supabase
+      .channel('noticias_realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'noticias' },
+        (payload) => {
+          const novaNoticia = payload.new as Noticia;
+
+          // 1. Adiciona no topo da lista atual sem precisar de refresh
+          setNoticias((prev) => [novaNoticia, ...prev]);
+
+          // 2. Dispara a notificação local (Banner)
+          Notifications.scheduleNotificationAsync({
+            content: {
+              title: "🆕 Nova Notícia!",
+              body: novaNoticia.titulo,
+              data: { noticiaId: novaNoticia.id }, // Dados extras caso queira abrir ao clicar
+            },
+            trigger: null, // dispara imediatamente
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchNoticias]);
 
   if (loading) {
     return (
@@ -51,20 +83,27 @@ export default function NoticiasScreen() {
   }
 
   return (
-    <ScreenContainer className="p-0">
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-        {/* Header */}
-        <View className="bg-primary px-6 py-6">
-          <Text className="text-2xl font-bold text-surface">Avisos e Notícias</Text>
-          <Text className="text-sm text-surface/70 mt-1">
-            {noticias.length} notícia{noticias.length !== 1 ? 's' : ''}
+    <ScreenContainer className="p-0 bg-background">
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+
+        {/* Header Refatorado */}
+        <View className="bg-primary pt-12 pb-10 px-6 rounded-b-[40px] shadow-lg items-center">
+          <Text className="text-3xl font-extrabold text-white">Avisos</Text>
+          <Text className="text-white/80 mt-1">
+            Fique por dentro das últimas atualizações
           </Text>
+
+          <View className="bg-white/20 px-4 py-1 rounded-full mt-4">
+            <Text className="text-white font-bold text-xs">
+              {noticias.length} {noticias.length === 1 ? 'NOTÍCIA' : 'NOTÍCIAS'}
+            </Text>
+          </View>
         </View>
 
-        {/* Content */}
+        {/* Lista de Notícias */}
         <View className="px-6 py-6">
           {noticias.length > 0 ? (
-            <View>
+            <View className="gap-2">
               {noticias.map((noticia) => (
                 <NoticiaCard
                   key={noticia.id}
@@ -78,9 +117,9 @@ export default function NoticiasScreen() {
               ))}
             </View>
           ) : (
-            <View className="bg-surface rounded-lg p-6 border border-border items-center">
-              <Text className="text-muted text-center text-base">
-                Nenhuma notícia no momento.
+            <View className="bg-surface rounded-3xl p-10 border border-dashed border-border items-center mt-10">
+              <Text className="text-muted text-center text-base italic">
+                Nenhuma notícia publicada ainda.
               </Text>
             </View>
           )}

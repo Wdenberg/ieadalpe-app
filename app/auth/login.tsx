@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import {Image, ScrollView, Text, View, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
+import { Image, ScrollView, Text, View, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ScreenContainer } from '@/components/screen-container';
 import { supabase } from '@/lib/supabase';
@@ -95,11 +95,11 @@ export default function LoginScreen() {
         <View className="flex-1 justify-center px-6 gap-8">
           {/* Logo Section */}
           <View className="items-center gap-4">
-             <View className=" items-center justify-center overflow-hidden" style={{ width: 110, height: 110 }}>
+            <View className=" items-center justify-center overflow-hidden" >
               <Image
                 source={logoIeadalpe}
-                style={{ width: 99, height: 99 }}
-                resizeMode="contain"
+                style={{ width: 200, height: 140 }}
+                resizeMode="cover"
               ></Image>
             </View>
             <Text className="text-base text-muted text-center">
@@ -156,7 +156,7 @@ export default function LoginScreen() {
               onPress={handleLogin}
               disabled={loading || isAuthenticating || !email || !password}
               className={cn(
-                'py-3 rounded-lg items-center justify-center',
+                'bg-foreground/10 border border-primary rounded-2xl py-3  items-center justify-center',
                 loading || isAuthenticating || !email || !password ? 'bg-primary/50' : 'bg-primary'
               )}
             >
@@ -172,13 +172,13 @@ export default function LoginScreen() {
               <TouchableOpacity
                 onPress={handleBiometricLogin}
                 disabled={isAuthenticating || loading}
-                className="py-3 rounded-lg items-center justify-center border-2 border-warning"
+                className="bg-foreground/10 border border-primary rounded-2xl py-3  items-center justify-center"
               >
                 {isAuthenticating ? (
                   <ActivityIndicator color={colors.warning} />
                 ) : (
                   <View className="flex-row items-center gap-2">
-                    <Text className="text-2xl">{biometricType === 'Face ID' ? '👤' : '👆'}</Text>
+                    <Text className="text-2xl">{biometricType === 'Face ID'}</Text>
                     <Text className="text-warning font-semibold text-base">
                       Entrar com {biometricType}
                     </Text>

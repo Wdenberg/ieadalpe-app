@@ -1,3 +1,4 @@
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   ScrollView,
   Text,
@@ -6,30 +7,29 @@ import {
   ActivityIndicator,
   Modal,
 } from 'react-native';
+import * as Notifications from 'expo-notifications'; // 1. Importação
 import { ScreenContainer } from '@/components/screen-container';
 import { useColors } from '@/hooks/use-colors';
-import { useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query'; // Adicionei useQueryClient
 import { useDocumentDownload } from '@/hooks/use-document-download';
 import { PDFViewer } from '@/components/pdf-viewer';
 import { cn } from '@/lib/utils';
 
-
+// --- Tipagens ---
 interface Documento {
   id: string;
-  titulo: string; 
-  descricao:string;    // era nome
-  tipo: string;       // era categoria
-  arquivo_url: string; // era url
+  titulo: string;
+  descricao: string;
+  tipo: string;
+  arquivo_url: string;
   created_at: string;
   visibilidade: string;
 }
 
 export default function DocumentosScreen({ userId }: { userId?: string }) {
-  
- 
   const colors = useColors();
+  const queryClient = useQueryClient(); // Para atualizar a lista automaticamente
 
   const {
     isDownloading,
@@ -43,100 +43,110 @@ export default function DocumentosScreen({ userId }: { userId?: string }) {
   const [viewerVisible, setViewerVisible] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
- // 🔥 React Query - Versão corrigida para pegar o user logado
-const {
-  data: documentos = [],
-  isLoading,
-  error,
-} = useQuery({
-  queryKey: ['documentos', userId], 
-  queryFn: async () => {
-    // 1. Pega a sessão atual do Supabase
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    // Se não houver sessão, nem tenta buscar (evita erro de RLS)
-    if (!session) return [];
+  // --- NOTIFICAÇÕES & REALTIME ---
+  useEffect(() => {
+    // Solicitar permissão
+    const setupNotifications = async () => {
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== 'granted') await Notifications.requestPermissionsAsync();
+    };
+    setupNotifications();
 
-    // 2. Busca os documentos
-    const { data, error } = await supabase
-      .from('documentos')
-      .select('id, titulo, tipo, arquivo_url, created_at, descricao, visibilidade')
-      .in('visibilidade', ['obreiros', 'publico'])
-      .order('created_at', { ascending: false });
+    // Escutar novos documentos
+    const channel = supabase
+      .channel('documentos_realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'documentos' },
+        (payload) => {
+          const novoDoc = payload.new as Documento;
 
-    if (error) throw error;
-    return data ?? [];
-  },
-  // Remova o "enabled: !!userId" e deixe carregar sempre, 
-  // pois o ID será checado dentro da função acima.
-  enabled: true, 
-});
+          // Só notifica se for visível para o obreiro
+          if (['obreiros', 'publico'].includes(novoDoc.visibilidade)) {
+            // Disparar Alerta
+            Notifications.scheduleNotificationAsync({
+              content: {
+                title: "📄 Novo Documento Disponível",
+                body: `O documento "${novoDoc.titulo}" foi publicado.`,
+                sound: true,
+              },
+              trigger: null,
+            });
 
-  // 🔥 Agrupar por categoria
+            // Atualiza a lista do React Query automaticamente
+            queryClient.invalidateQueries({ queryKey: ['documentos'] });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+  // --- BUSCA DE DADOS (React Query) ---
+  const {
+    data: documentos = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['documentos', userId],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return [];
+
+      const { data, error } = await supabase
+        .from('documentos')
+        .select('id, titulo, tipo, arquivo_url, created_at, descricao, visibilidade')
+        .in('visibilidade', ['obreiros', 'publico'])
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: true,
+  });
+
+  // --- LÓGICA DE CATEGORIZAÇÃO ---
   const categorizedDocumentos = useMemo(() => {
     return documentos.reduce((acc, doc) => {
       const existing = acc.find((item) => item.categoria === doc.tipo);
-
       if (existing) {
         existing.docs.push(doc);
       } else {
         acc.push({ categoria: doc.tipo, docs: [doc] });
       }
-
       return acc;
     }, [] as Array<{ categoria: string; docs: Documento[] }>);
   }, [documentos]);
 
+  // --- HELPERS ---
+  const getSignedUrl = async (path: string) => {
+    const cleanPath = path.replace('private://', '').trim();
+    const { data, error } = await supabase.storage
+      .from('media-private')
+      .createSignedUrl(cleanPath, 3600);
 
-  const normalizePath = (path: string) => {
-  return path
-    .replace('private://', '')
-    .trim();
-};
+    if (error) {
+      console.error('Erro ao gerar URL:', error);
+      return null;
+    }
+    return data?.signedUrl;
+  };
 
-const getSignedUrl = async (path: string) => {
- 
-  const cleanPath = normalizePath(path);
-  console.log("Tentando buscar o arquivo:", cleanPath); 
-  console.log("PATH ORIGINAL:", path);
-  console.log("PATH LIMPO:", cleanPath);// Log para debug
-
-  const { data, error } = await supabase.storage
-    .from('media-private')  // Nome do seu bucket
-    .createSignedUrl(cleanPath, 60 * 60);
-
-  if (error) {
-    console.error('Erro ao gerar URL:', error);
-    return null;
-  }
-
-  return data?.signedUrl;
-};
-
-  // 🔥 Abrir PDF
   const handleOpenDocument = async (documento: Documento) => {
     const signedUrl = await getSignedUrl(documento.arquivo_url);
-
     if (!signedUrl) return;
-
-    setSelectedDocument({
-      ...documento,
-      arquivo_url: signedUrl,
-    });
-
+    setSelectedDocument({ ...documento, arquivo_url: signedUrl });
     setViewerVisible(true);
   };
 
-  // 🔥 Download PDF
   const handleDownload = async (documento: Documento) => {
     try {
       setDownloadingId(documento.id);
-
       const signedUrl = await getSignedUrl(documento.arquivo_url);
-
       if (!signedUrl) return;
-
-      // 🔥 No handleDownload, mude doc.tipo para doc.titulo
       await downloadDocument(signedUrl, `${documento.titulo}.pdf`);
     } catch (err) {
       console.error(err);
@@ -145,12 +155,7 @@ const getSignedUrl = async (path: string) => {
     }
   };
 
-  const handleCloseViewer = () => {
-    setViewerVisible(false);
-    setSelectedDocument(null);
-  };
-
-  // 🔥 Loading
+  // --- RENDER ---
   if (isLoading) {
     return (
       <ScreenContainer className="items-center justify-center">
@@ -159,109 +164,72 @@ const getSignedUrl = async (path: string) => {
     );
   }
 
-  // 🔥 Erro
   if (error) {
     return (
       <ScreenContainer className="items-center justify-center">
-        <Text className="text-error">Erro ao carregar documentos</Text>
+        <Text className="text-red-500">Erro ao carregar documentos</Text>
       </ScreenContainer>
     );
   }
 
   return (
-    <ScreenContainer className="p-0">
+    <ScreenContainer className="p-0 bg-background">
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         {/* Header */}
-        <View className="bg-primary px-6 py-6">
-          <Text className="text-2xl font-bold text-surface">
-            Documentos Restritos
-          </Text>
-          <Text className="text-sm text-surface/70 mt-1">
-            Acesso exclusivo para obreiros
-          </Text>
+        <View
+          className="bg-primary px-6 py-8 items-center rounded-b-[32px] shadow-lg"
+        >
+          <Text className="text-2xl font-extrabold text-white">Documentos</Text>
+          <Text className="text-white/80 text-xs mt-1">Acesso restrito para obreiros</Text>
         </View>
 
         <View className="px-6 py-6 gap-6">
-          {/* Erro download */}
           {downloadError && (
-            <View className="bg-error/10 border border-error rounded-lg p-3">
-              <View className="flex-row justify-between">
-                <Text className="text-error text-sm flex-1">
-                  {downloadError}
-                </Text>
-                <TouchableOpacity onPress={clearError}>
-                  <Text className="text-error font-bold">✕</Text>
-                </TouchableOpacity>
-              </View>
+            <View className="bg-red-100 border border-red-400 rounded-lg p-3 flex-row justify-between">
+              <Text className="text-red-700 text-sm flex-1">{downloadError}</Text>
+              <TouchableOpacity onPress={clearError}><Text className="font-bold">✕</Text></TouchableOpacity>
             </View>
           )}
 
-          {/* Vazio */}
           {categorizedDocumentos.length === 0 && (
-            <Text className="text-center text-muted">
-              Nenhum documento disponível
-            </Text>
+            <Text className="text-center text-muted mt-10 italic">Nenhum documento disponível</Text>
           )}
 
-          {/* Lista */}
           {categorizedDocumentos.map((group) => (
             <View key={group.categoria} className="gap-3">
-              <View className="flex-row items-center gap-2">
-                <View className="flex-1 h-px bg-border" />
-                <Text className="text-xs font-bold text-primary px-2 uppercase">
+              <View className="flex-row items-center gap-2 mb-1">
+                <Text className="text-xs font-black text-primary uppercase tracking-widest">
                   {group.categoria}
                 </Text>
-                <View className="flex-1 h-px bg-border" />
+                <View className="flex-1 h-[1px] bg-border" />
               </View>
 
               {group.docs.map((doc) => (
-                <View key={doc.id} className="gap-2">
-                  {/* Card */}
+                <View key={doc.id} className="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm">
                   <TouchableOpacity
+                    activeOpacity={0.7}
                     onPress={() => handleOpenDocument(doc)}
-                    disabled={isDownloading && downloadingId === doc.id}
-                    className="bg-surface rounded-lg p-4 border border-border"
+                    className="p-4"
                   >
-                    <Text className="text-xs text-warning font-semibold mb-1">
-                      📄 {doc.tipo}
-                    </Text>
-
-                    <Text className="text-base font-bold text-foreground">
-                      {doc.titulo}
-                    </Text>
-
-                    <Text className="text-xs text-muted mt-2">
-                      {new Date(doc.created_at).toLocaleDateString('pt-BR')}
+                    <Text className="text-base font-bold text-foreground">{doc.titulo}</Text>
+                    {doc.descricao ? <Text className="text-xs text-muted mt-1">{doc.descricao}</Text> : null}
+                    <Text className="text-[10px] text-muted mt-3 uppercase font-medium">
+                      Publicado em: {new Date(doc.created_at).toLocaleDateString('pt-BR')}
                     </Text>
                   </TouchableOpacity>
 
-                  {/* Download */}
                   <TouchableOpacity
                     onPress={() => handleDownload(doc)}
                     disabled={isDownloading && downloadingId === doc.id}
                     className={cn(
-                      'rounded-lg py-3 flex-row justify-center items-center gap-2',
-                      isDownloading && downloadingId === doc.id
-                        ? 'bg-success/50'
-                        : 'bg-success'
+                      "py-3 flex-row justify-center items-center gap-2 border-t border-border",
+                      isDownloading && downloadingId === doc.id ? "bg-muted" : "bg-tertiary"
                     )}
                   >
                     {isDownloading && downloadingId === doc.id ? (
-                      <>
-                        <ActivityIndicator color={colors.surface} />
-                        <Text className="text-surface text-sm">
-                          {downloadProgress
-                            ? `${Math.round(downloadProgress.progress * 100)}%`
-                            : 'Baixando...'}
-                        </Text>
-                      </>
+                      <ActivityIndicator color={colors.primary} size="small" />
                     ) : (
-                      <>
-                        <Text>⬇</Text>
-                        <Text className="text-surface font-semibold">
-                          Baixar Documento
-                        </Text>
-                      </>
+                      <Text className="text-primary font-bold text-sm">⬇ Baixar Arquivo</Text>
                     )}
                   </TouchableOpacity>
                 </View>
@@ -271,13 +239,12 @@ const getSignedUrl = async (path: string) => {
         </View>
       </ScrollView>
 
-      {/* PDF Viewer */}
       <Modal visible={viewerVisible} animationType="slide">
         {selectedDocument && (
           <PDFViewer
             uri={selectedDocument.arquivo_url}
             fileName={selectedDocument.titulo}
-            onClose={handleCloseViewer}
+            onClose={() => setViewerVisible(false)}
           />
         )}
       </Modal>
