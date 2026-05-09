@@ -101,29 +101,77 @@ export default function PerfilScreen() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleUpdatePhoto = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.5,
-      base64: true,
-    });
 
-    if (result.canceled || !result.assets[0].base64) return;
+    if (!user || !obreiro) {
+      return;
+    }
 
     try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: 'images',
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.5,
+      });
+
+      if (result.canceled || !result.assets?.length) {
+        return;
+      }
+
       setUploading(true);
-      const filePath = `fotos_perfil/${obreiro.id}_${Date.now()}.jpg`;
+
+      const asset = result.assets[0];
+
+      const response = await fetch(asset.uri);
+
+      const arrayBuffer = await response.arrayBuffer();
+
+      const filePath = `obreiros/${user.id}/${Date.now()}.jpg`;
+
       const { error: uploadError } = await supabase.storage
         .from('media-private')
-        .upload(filePath, decode(result.assets[0].base64), { contentType: 'image/jpeg', upsert: true });
+        .upload(filePath, arrayBuffer, {
+          contentType: 'image/jpeg',
+          upsert: true,
+        });
 
-      if (uploadError) throw uploadError;
-      await supabase.from('obreiros').update({ foto_url: `private://${filePath}` }).eq('id', obreiro.id);
+      if (uploadError) {
+        throw uploadError;
+      }
 
-      fetchData();
+      const photoUrl = `private://${filePath}`;
+
+      const { error: updateError } = await supabase
+        .from('obreiros')
+        .update({
+          foto_url: photoUrl,
+        })
+        .eq('id', obreiro.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      const { data } = await supabase.storage
+        .from('media-private')
+        .createSignedUrl(filePath, 3600);
+
+      setObreiro((prev: any) => ({
+        ...prev,
+        foto_url: photoUrl,
+        displayUrl: data?.signedUrl,
+      }));
+
+      Alert.alert('Sucesso', 'Foto atualizada!');
     } catch (err) {
-      Alert.alert("Erro", "Falha ao carregar imagem.");
+      console.error('UPLOAD ERROR:', err);
+
+      Alert.alert(
+        'Erro',
+        err instanceof Error
+          ? err.message
+          : 'Falha ao carregar imagem.'
+      );
     } finally {
       setUploading(false);
     }
