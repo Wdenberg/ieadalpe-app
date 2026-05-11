@@ -22,6 +22,7 @@ import { AuthProvider } from "@/lib/auth-context";
 import * as Notifications from 'expo-notifications';
 import { LogBox } from 'react-native';
 
+
 // --- CONFIGURAÇÃO DE NOTIFICAÇÕES (FORA DO COMPONENTE) ---
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -37,7 +38,7 @@ const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
 
 export const unstable_settings = {
-  anchor: "(tabs)",
+  anchor: "index",
 };
 
 
@@ -47,6 +48,28 @@ export default function RootLayout() {
 
   const [insets, setInsets] = useState<EdgeInsets>(initialInsets);
   const [frame, setFrame] = useState<Rect>(initialFrame);
+
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+
+    async function setupNotifications() {
+      // 1. Permissão
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== 'granted') return;
+
+      // 2. Canal para Android (O segredo do Banner)
+      if (Platform.OS === 'android') {
+        await Notifications.setNotificationChannelAsync('default', {
+          name: 'Alertas de Notícias',
+          importance: Notifications.AndroidImportance.MAX,
+          vibrationPattern: [0, 250, 250, 250],
+          showBadge: true,
+        });
+      }
+    }
+
+    setupNotifications();
+  }, []);
 
   // Initialize Manus runtime
   useEffect(() => {
@@ -64,6 +87,8 @@ export default function RootLayout() {
     const unsubscribe = subscribeSafeAreaInsets(handleSafeAreaUpdate);
     return () => unsubscribe();
   }, [handleSafeAreaUpdate]);
+
+
 
   const [queryClient] = useState(
     () =>
@@ -97,6 +122,7 @@ export default function RootLayout() {
         <trpc.Provider client={trpcClient} queryClient={queryClient}>
           <QueryClientProvider client={queryClient}>
             <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="index" />
               <Stack.Screen name="(tabs)" />
               <Stack.Screen name="auth/login" options={{ presentation: 'fullScreenModal' }} />
               <Stack.Screen name="oauth/callback" />

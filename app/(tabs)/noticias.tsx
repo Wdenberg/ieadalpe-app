@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, ActivityIndicator } from 'react-native';
+import { ScrollView, Text, View, ActivityIndicator, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ScreenContainer } from '@/components/screen-container';
 import { NoticiaCard } from '@/components/noticia-card';
@@ -16,11 +16,24 @@ interface Noticia {
   created_at: string;
 }
 
+// Configuração das Notificações
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
+
+
 export default function NoticiasScreen() {
   const router = useRouter();
   const colors = useColors();
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [loading, setLoading] = useState(true);
+
 
   // --- BUSCA DE DADOS ---
   const fetchNoticias = useCallback(async () => {
@@ -42,6 +55,7 @@ export default function NoticiasScreen() {
 
   // --- REALTIME ---
   useEffect(() => {
+
     fetchNoticias();
 
     // Criar o canal para escutar novas notícias
@@ -59,7 +73,7 @@ export default function NoticiasScreen() {
           // 2. Dispara a notificação local (Banner)
           Notifications.scheduleNotificationAsync({
             content: {
-              title: "🆕 Nova Notícia!",
+              title: "🆕 Notícia da IEADALPE",
               body: novaNoticia.titulo,
               data: { noticiaId: novaNoticia.id }, // Dados extras caso queira abrir ao clicar
             },
@@ -84,7 +98,15 @@ export default function NoticiasScreen() {
 
   return (
     <ScreenContainer className="p-0 bg-background">
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={fetchNoticias}
+
+          />
+        }
+      >
 
         {/* Header Refatorado */}
         <View className="bg-primary pt-12 pb-10 px-6 rounded-b-[40px] shadow-lg items-center">

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useRef } from 'react';
-import { useRouter, useSegments } from 'expo-router';
+import { usePathname, useRouter, useSegments } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useSecureToken } from '@/hooks/use-secure-token';
 import type { Session, User } from '@supabase/supabase-js';
@@ -23,6 +23,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const segments = useSegments();
   const { saveAccessToken, saveRefreshToken, clearTokens } = useSecureToken();
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const pathname = usePathname();
 
   /**
    * Configurar refresh automático de tokens
@@ -78,18 +80,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         // Obter sessão inicial
         const { data: { session: initialSession } } = await supabase.auth.getSession();
-        
+
         if (initialSession) {
           setSession(initialSession);
           setUser(initialSession.user);
           setUserRole(getUserRole(initialSession.user));
-          
+
           // Salvar tokens de forma segura
           await saveAccessToken(initialSession.access_token);
           if (initialSession.refresh_token) {
             await saveRefreshToken(initialSession.refresh_token);
           }
-          
+
           // Configurar refresh automático
           setupTokenRefresh(initialSession);
         }
@@ -108,16 +110,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
       setSession(newSession);
       setUser(newSession?.user ?? null);
-      
+
       if (newSession?.user) {
         setUserRole(getUserRole(newSession.user));
-        
+
         // Salvar tokens
         await saveAccessToken(newSession.access_token);
         if (newSession.refresh_token) {
           await saveRefreshToken(newSession.refresh_token);
         }
-        
+
         // Configurar refresh automático
         setupTokenRefresh(newSession);
       } else {
@@ -143,13 +145,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (loading) return;
 
+    // 1. Checa se o usuário está na tela inicial (animação)
+    // O pathname '/' é exatamente a sua app/index.tsx
+    const isIndexPage = pathname === '/';
+
+    // 2. Checa se está dentro do grupo de autenticação
     const inAuthGroup = segments[0] === 'auth';
 
+    // Se estiver na tela de animação, SAIA do useEffect e não redirecione!
+    if (isIndexPage) return;
+
     if (!session && !inAuthGroup) {
-      // Redirecionar para login se não autenticado
       router.replace('/auth/login');
     } else if (session && inAuthGroup) {
-      // Redirecionar para home se autenticado
       router.replace('/(tabs)');
     }
   }, [session, loading, segments, router]);
@@ -164,11 +172,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       setUserRole(null);
       await clearTokens();
-      
+
       if (refreshTimerRef.current) {
         clearTimeout(refreshTimerRef.current);
       }
-      
+
       router.replace('/auth/login');
     } catch (error) {
       console.error('Erro ao fazer logout:', error);

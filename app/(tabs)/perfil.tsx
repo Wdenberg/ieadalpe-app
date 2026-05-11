@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ScrollView, Text, View, TouchableOpacity, ActivityIndicator, Image, Alert } from 'react-native';
+import { ScrollView, Text, View, TouchableOpacity, ActivityIndicator, Image, Alert, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import {
@@ -192,7 +192,16 @@ export default function PerfilScreen() {
 
   return (
     <ScreenContainer className="p-0 bg-background">
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false}
+
+        refreshControl={
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={fetchData}
+
+          />
+        }
+      >
 
         {/* HEADER COM AVATAR */}
         <View className="bg-primary pt-16 pb-12 px-6 items-center rounded-b-[50px] shadow-2xl">

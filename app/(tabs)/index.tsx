@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ScrollView, Text, View, TouchableOpacity, ActivityIndicator, Image, StatusBar } from 'react-native';
+import { ScrollView, Text, View, TouchableOpacity, ActivityIndicator, Image, StatusBar, RefreshControl } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { ScreenContainer } from '@/components/screen-container';
 import { useAuth } from '@/lib/auth-context';
@@ -109,7 +109,16 @@ export default function DashboardScreen() {
     <ScreenContainer className="p-0 bg-background">
       <StatusBar barStyle="light-content" />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={fetchData}
+
+          />
+        }
+
+      >
 
         {/* --- HEADER MODERNIZADO --- */}
         <View className="bg-primary pt-16 pb-10 px-6 rounded-b-[50px] shadow-2xl">

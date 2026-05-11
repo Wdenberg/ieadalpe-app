@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { ScreenContainer } from '@/components/screen-container';
@@ -170,7 +171,15 @@ export default function EscalasScreen() {
 
   return (
     <ScreenContainer className="p-0 bg-background">
-      <ScrollView stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false}>
+      <ScrollView stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={fetchData}
+
+          />
+        }
+      >
 
         {/* HEADER */}
         <View className="bg-primary pt-12 pb-10 px-6 rounded-b-[40px] shadow-lg">
