@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   ScrollView,
   Text,
@@ -6,13 +6,13 @@ import {
   ActivityIndicator,
   Image,
   TouchableOpacity,
-  StatusBar
-} from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ScreenContainer } from '@/components/screen-container';
-import { useColors } from '@/hooks/use-colors';
-import { supabase } from '@/lib/supabase';
-import { ArrowLeft, Clock, User, Tag } from 'lucide-react-native';
+  StatusBar,
+} from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { ScreenContainer } from "@/components/screen-container";
+import { useColors } from "@/hooks/use-colors";
+import { supabase } from "@/lib/supabase";
+import { ArrowLeft, Clock, User, Tag } from "lucide-react-native";
 
 interface NoticiaDetalhada {
   id: string;
@@ -40,15 +40,15 @@ export default function NoticiaDetalheScreen() {
       if (!id) return;
       try {
         const { data, error: fetchError } = await supabase
-          .from('noticias')
-          .select('*')
-          .eq('id', id)
+          .from("noticias")
+          .select("*")
+          .eq("id", id)
           .single();
 
         if (fetchError) throw fetchError;
         setNoticia(data);
       } catch (err) {
-        setError('Não foi possível carregar esta notícia.');
+        setError("Não foi possível carregar esta notícia.");
         console.error(err);
       } finally {
         setLoading(false);
@@ -59,10 +59,10 @@ export default function NoticiaDetalheScreen() {
   }, [id]);
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
+    return new Date(dateString).toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
     });
   };
 
@@ -77,7 +77,9 @@ export default function NoticiaDetalheScreen() {
   if (error || !noticia) {
     return (
       <ScreenContainer className="p-6 items-center justify-center">
-        <Text className="text-lg font-bold text-red-500 mb-4">{error || 'Notícia não encontrada'}</Text>
+        <Text className="text-lg font-bold text-red-500 mb-4">
+          {error || "Notícia não encontrada"}
+        </Text>
         <TouchableOpacity
           onPress={() => router.back()}
           className="bg-primary rounded-2xl px-8 py-4 shadow-md"
@@ -101,8 +103,10 @@ export default function NoticiaDetalheScreen() {
         <ArrowLeft size={24} color="white" />
       </TouchableOpacity>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 140 }}
+      >
         {/* IMAGEM DE CAPA */}
         {noticia.imagem_url ? (
           <Image
@@ -112,18 +116,19 @@ export default function NoticiaDetalheScreen() {
           />
         ) : (
           <View className="w-full h-40 bg-primary justify-end p-6">
-            <Text className="text-white/60 font-bold tracking-tighter">IEADALPE NOTÍCIAS</Text>
+            <Text className="text-white/60 font-bold tracking-tighter">
+              IEADALPE NOTÍCIAS
+            </Text>
           </View>
         )}
 
         <View className="px-6 -mt-8 bg-background rounded-t-[40px] pt-8 pb-20">
-
           {/* CATEGORIA E DATA */}
           <View className="flex-row items-center justify-between mb-4">
             <View className="flex-row items-center bg-primary/10 px-3 py-1 rounded-full">
               <Tag size={12} color={colors.primary} />
               <Text className="text-[10px] font-black text-primary uppercase ml-1 tracking-widest">
-                {noticia.categoria || 'Geral'}
+                {noticia.categoria || "Geral"}
               </Text>
             </View>
             <View className="flex-row items-center">
@@ -146,7 +151,9 @@ export default function NoticiaDetalheScreen() {
             </View>
             <View>
               <Text className="text-xs text-muted">Publicado por</Text>
-              <Text className="text-sm font-bold text-foreground">{noticia.autor_nome || 'Redação IEADALPE'}</Text>
+              <Text className="text-sm font-bold text-foreground">
+                {noticia.autor_nome || "Redação IEADALPE"}
+              </Text>
             </View>
           </View>
 
@@ -177,7 +184,6 @@ export default function NoticiaDetalheScreen() {
           >
             <Text className="text-primary font-bold">Voltar para a lista</Text>
           </TouchableOpacity>
-
         </View>
       </ScrollView>
     </ScreenContainer>

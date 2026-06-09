@@ -1,18 +1,26 @@
-import { useState, useEffect } from 'react';
-import { Image, ScrollView, Text, View, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
-import { ScreenContainer } from '@/components/screen-container';
-import { supabase } from '@/lib/supabase';
-import { useColors } from '@/hooks/use-colors';
-import { cn } from '@/lib/utils';
-import { useBiometricAuth } from '@/hooks/use-biometric-auth';
-import logoIeadalpe from '@/assets/images/logo_igreja.png'
+import { useState, useEffect } from "react";
+import {
+  Image,
+  ScrollView,
+  Text,
+  View,
+  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
+} from "react-native";
+import { useRouter } from "expo-router";
+import { ScreenContainer } from "@/components/screen-container";
+import { supabase } from "@/lib/supabase";
+import { useColors } from "@/hooks/use-colors";
+import { cn } from "@/lib/utils";
+import { useBiometricAuth } from "@/hooks/use-biometric-auth";
+import logoIeadalpe from "@/assets/images/logo_igreja.png";
 
 export default function LoginScreen() {
   const router = useRouter();
   const colors = useColors();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const {
@@ -44,18 +52,18 @@ export default function LoginScreen() {
 
       // Disparar função de log de login
       try {
-        await supabase.functions.invoke('log-obreiro-login', {
-          body: { action: 'login' },
+        await supabase.functions.invoke("log-obreiro-login", {
+          body: { action: "login" },
         });
       } catch (logError) {
-        console.error('Erro ao registrar log de login:', logError);
+        console.error("Erro ao registrar log de login:", logError);
         // Continuar mesmo se o log falhar
       }
 
       // Login bem-sucedido, redirecionar para dashboard
-      router.replace('/(tabs)');
+      router.replace("/(tabs)");
     } catch (err) {
-      setError('Erro ao fazer login. Tente novamente.');
+      setError("Erro ao fazer login. Tente novamente.");
       console.error(err);
     } finally {
       setLoading(false);
@@ -73,19 +81,19 @@ export default function LoginScreen() {
       if (data.session) {
         // Disparar função de log de login
         try {
-          await supabase.functions.invoke('log-obreiro-login', {
-            body: { action: 'biometric_login' },
+          await supabase.functions.invoke("log-obreiro-login", {
+            body: { action: "biometric_login" },
           });
         } catch (logError) {
-          console.error('Erro ao registrar log de login biométrico:', logError);
+          console.error("Erro ao registrar log de login biométrico:", logError);
         }
 
-        router.replace('/(tabs)');
+        router.replace("/(tabs)");
       } else {
-        setError('Sessão expirada. Por favor, faça login novamente.');
+        setError("Sessão expirada. Por favor, faça login novamente.");
       }
     } else {
-      setError(result.error || 'Falha na autenticação biométrica');
+      setError(result.error || "Falha na autenticação biométrica");
     }
   };
 
@@ -95,7 +103,7 @@ export default function LoginScreen() {
         <View className="flex-1 justify-center px-6 gap-8">
           {/* Logo Section */}
           <View className="items-center gap-4">
-            <View className=" items-center justify-center overflow-hidden" >
+            <View className=" items-center justify-center overflow-hidden">
               <Image
                 source={logoIeadalpe}
                 style={{ width: 200, height: 140 }}
@@ -111,11 +119,13 @@ export default function LoginScreen() {
           <View className="gap-4">
             {/* Email Input */}
             <View className="gap-2">
-              <Text className="text-sm font-semibold text-foreground">Email</Text>
+              <Text className="text-sm font-semibold text-foreground">
+                Email
+              </Text>
               <TextInput
                 className={cn(
-                  'px-4 py-3 rounded-lg border text-foreground',
-                  'bg-surface border-border'
+                  "px-4 py-3 rounded-lg border text-foreground",
+                  "bg-surface border-border",
                 )}
                 placeholder="seu@email.com"
                 placeholderTextColor={colors.muted}
@@ -129,11 +139,13 @@ export default function LoginScreen() {
 
             {/* Password Input */}
             <View className="gap-2">
-              <Text className="text-sm font-semibold text-foreground">Senha</Text>
+              <Text className="text-sm font-semibold text-foreground">
+                Senha
+              </Text>
               <TextInput
                 className={cn(
-                  'px-4 py-3 rounded-lg border text-foreground',
-                  'bg-surface border-border'
+                  "px-4 py-3 rounded-lg border text-foreground",
+                  "bg-surface border-border",
                 )}
                 placeholder="••••••••"
                 placeholderTextColor={colors.muted}
@@ -156,14 +168,18 @@ export default function LoginScreen() {
               onPress={handleLogin}
               disabled={loading || isAuthenticating || !email || !password}
               className={cn(
-                'bg-foreground/10 border border-primary rounded-2xl py-3  items-center justify-center',
-                loading || isAuthenticating || !email || !password ? 'bg-primary/50' : 'bg-primary'
+                "bg-foreground/10 border border-primary rounded-2xl py-3  items-center justify-center",
+                loading || isAuthenticating || !email || !password
+                  ? "bg-primary/50"
+                  : "bg-primary",
               )}
             >
               {loading ? (
                 <ActivityIndicator color={colors.surface} />
               ) : (
-                <Text className="py-2 text-surface font-semibold text-base">Entrar</Text>
+                <Text className="py-2 text-surface font-semibold text-base">
+                  Entrar
+                </Text>
               )}
             </TouchableOpacity>
 
@@ -178,7 +194,9 @@ export default function LoginScreen() {
                   <ActivityIndicator color={colors.warning} />
                 ) : (
                   <View className="flex-row items-center gap-2">
-                    <Text className="text-2xl">{biometricType === 'Face ID'}</Text>
+                    <Text className="text-2xl">
+                      {biometricType === "Biometria"}
+                    </Text>
                     <Text className="text-warning font-semibold text-base">
                       Entrar com {biometricType}
                     </Text>
@@ -189,17 +207,19 @@ export default function LoginScreen() {
 
             {/* Forgot Password Link */}
             <TouchableOpacity
-              onPress={() => router.push('/auth/forgot-password')}
+              onPress={() => router.push("/auth/forgot-password")}
               className="items-center py-2"
             >
-              <Text className="text-primary text-sm font-semibold">Esqueceu a senha?</Text>
+              <Text className="text-primary text-sm font-semibold">
+                Esqueceu a senha?
+              </Text>
             </TouchableOpacity>
           </View>
 
           {/* Footer */}
           <View className="items-center gap-2">
             <Text className="text-xs text-muted text-center">
-              Apenas obreiros e membros autorizados podem acessar este aplicativo.
+              Apenas obreiros autorizados podem acessar este aplicativo.
             </Text>
           </View>
         </View>

@@ -1,11 +1,19 @@
-import { ScrollView, Text, View, ActivityIndicator, RefreshControl } from 'react-native';
-import { useRouter } from 'expo-router';
-import { ScreenContainer } from '@/components/screen-container';
-import { NoticiaCard } from '@/components/noticia-card';
-import { useColors } from '@/hooks/use-colors';
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
-import * as Notifications from 'expo-notifications'; // Importar para a notificação local
+import {
+  ScrollView,
+  Text,
+  View,
+  ActivityIndicator,
+  RefreshControl,
+  Alert,
+} from "react-native";
+import { useRouter } from "expo-router";
+import { ScreenContainer } from "@/components/screen-container";
+import { NoticiaCard } from "@/components/noticia-card";
+import { useColors } from "@/hooks/use-colors";
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/lib/supabase";
+import * as Notifications from "expo-notifications"; // Importar para a notificação local
+import { noticiasService } from "@/services/noticiasServices";
 
 interface Noticia {
   id: string;
@@ -27,27 +35,20 @@ Notifications.setNotificationHandler({
   }),
 });
 
-
 export default function NoticiasScreen() {
   const router = useRouter();
   const colors = useColors();
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [loading, setLoading] = useState(true);
 
-
   // --- BUSCA DE DADOS ---
   const fetchNoticias = useCallback(async () => {
     try {
-      const { data: noticiasData } = await supabase
-        .from('noticias')
-        .select('id, autor_nome, titulo, resumo, imagem_url, created_at')
-        .order('created_at', { ascending: false });
-
-      if (noticiasData) {
-        setNoticias(noticiasData);
-      }
+      setLoading(true);
+      const dataNoticia = await noticiasService.getTodas();
+      if (dataNoticia) setNoticias(dataNoticia);
     } catch (error) {
-      console.error('Erro ao carregar notícias:', error);
+      console.error("Erro ao carregar as Noticias", error);
     } finally {
       setLoading(false);
     }
@@ -55,34 +56,21 @@ export default function NoticiasScreen() {
 
   // --- REALTIME ---
   useEffect(() => {
-
     fetchNoticias();
 
     // Criar o canal para escutar novas notícias
-    const channel = supabase
-      .channel('noticias_realtime')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'noticias' },
-        (payload) => {
-          const novaNoticia = payload.new as Noticia;
+    const channel = noticiasService.inscreverEmNovasNoticias((newNoticia) => {
+      setNoticias((prev) => [newNoticia, ...prev]);
 
-          // 1. Adiciona no topo da lista atual sem precisar de refresh
-          setNoticias((prev) => [novaNoticia, ...prev]);
-
-          // 2. Dispara a notificação local (Banner)
-          Notifications.scheduleNotificationAsync({
-            content: {
-              title: "🆕 Notícia da IEADALPE",
-              body: novaNoticia.titulo,
-              data: { noticiaId: novaNoticia.id }, // Dados extras caso queira abrir ao clicar
-            },
-            trigger: null, // dispara imediatamente
-          });
-        }
-      )
-      .subscribe();
-
+      Notifications.scheduleNotificationAsync({
+        content: {
+          title: "New Noticia da Ieadalpe",
+          body: newNoticia.titulo,
+          data: { noticiaId: newNoticia.id },
+        },
+        trigger: null,
+      });
+    });
     return () => {
       supabase.removeChannel(channel);
     };
@@ -98,16 +86,13 @@ export default function NoticiasScreen() {
 
   return (
     <ScreenContainer className="p-0 bg-background">
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 140 }}
+        showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl
-            refreshing={loading}
-            onRefresh={fetchNoticias}
-
-          />
+          <RefreshControl refreshing={loading} onRefresh={fetchNoticias} />
         }
       >
-
         {/* Header Refatorado */}
         <View className="bg-primary pt-12 pb-10 px-6 rounded-b-[40px] shadow-lg items-center">
           <Text className="text-3xl font-extrabold text-white">Avisos</Text>
@@ -117,7 +102,7 @@ export default function NoticiasScreen() {
 
           <View className="bg-white/20 px-4 py-1 rounded-full mt-4">
             <Text className="text-white font-bold text-xs">
-              {noticias.length} {noticias.length === 1 ? 'NOTÍCIA' : 'NOTÍCIAS'}
+              {noticias.length} {noticias.length === 1 ? "NOTÍCIA" : "NOTÍCIAS"}
             </Text>
           </View>
         </View>
@@ -130,7 +115,7 @@ export default function NoticiasScreen() {
                 <NoticiaCard
                   key={noticia.id}
                   titulo={noticia.titulo}
-                  autor_nome={noticia.autor_nome || 'IEADALPE'}
+                  autor_nome={noticia.autor_nome || "IEADALPE"}
                   resumo={noticia.resumo}
                   imagemUrl={noticia.imagem_url}
                   data={noticia.created_at}
