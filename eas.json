@@ -7,13 +7,16 @@
     "preview": {
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://eibecfipkarjodonkgbq.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpYmVjZmlwa2Fyam9kb25rZ2JxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0NjIxNjcsImV4cCI6MjA4MTAzODE2N30.NlzE8wVO0PtjpyRx1cvBW4uQNqU_HDYnhTdJnll9cB"
       }
     },
     "development": {
       "developmentClient": true,
       "distribution": "internal"
     },
-    
     "production": {
       "autoIncrement": true
     }
