@@ -22,23 +22,30 @@ export default function TabLayout() {
 
   const bottomPadding = Platform.OS === "web" ? 12 : Math.max(insets.bottom, 8);
   // Altura ligeiramente maior para acomodar a curva
-  const tabBarHeight = 55 + bottomPadding;
+  const tabBarHeight = 50 + bottomPadding;
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.tint, // Altere no seu hook para o azul da imagem (#1e88e5)
+        tabBarActiveTintColor: "#1e88e55",
         tabBarInactiveTintColor: "#8e8e93",
         headerShown: false,
+        tabBarLabelStyle: {
+          fontSize: 12,
+          marginBottom: Platform.OS === "android" ? 6 : 0,
+        },
         tabBarStyle: {
           position: "absolute",
           borderTopWidth: 0,
-          backgroundColor: "transparent", // Importante: deixa transparente para ver a curva
+          backgroundColor: "transparent",
           elevation: 0,
           height: tabBarHeight,
+          overflow: "visible",
         },
-        // Injeta o fundo customizado por trás dos botões
-        tabBarBackground: () => <TabBg color={colors.background} />,
+
+        tabBarBackground: () => (
+          <TabBg color={colors.background} height={tabBarHeight} />
+        ),
       }}
     >
       <Tabs.Screen
@@ -117,7 +124,7 @@ const styles = StyleSheet.create({
     transform: [{ rotate: "45deg" }], // Rotaciona o quadrado para virar um losango
     justifyContent: "center",
     alignItems: "center",
-    top: -18, // Joga o botão para cima, saindo da barra
+    top: -30, // Joga o botão para cima, saindo da barra
     // Sombra suave
     shadowColor: "#1e88e5",
     shadowOffset: { width: 0, height: 4 },
